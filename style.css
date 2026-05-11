@@ -393,3 +393,121 @@ td { padding: 10px 14px; border-bottom: 1px solid var(--border); color: var(--te
     transform: scale(1);
   }
 }
+@media (max-width: 768px) {
+
+  .topbar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 14px;
+  }
+
+  .topbar-left,
+  .topbar-right {
+    width: 100%;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .topbar-search {
+    width: 100%;
+  }
+
+  .topbar-search input {
+    width: 100%;
+  }
+
+  .filter-bar {
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    padding: 14px;
+  }
+
+  .filter-actions {
+    grid-column: span 2;
+    display: flex;
+    gap: 10px;
+  }
+
+  .main {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 14px;
+  }
+
+  .traffic-card,
+  .sender-card,
+  .alert-card,
+  .latest-card,
+  .operator-card,
+  .perf-card {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .chart-wrap {
+    height: 280px;
+  }
+
+  .card-header {
+    font-size: 12px;
+    padding: 14px;
+  }
+
+  .table-wrap {
+    overflow-x: auto;
+  }
+
+  table {
+    min-width: 700px;
+  }
+
+  .latest-toolbar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .latest-right {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+  }
+
+  .pagination-wrap {
+    overflow-x: auto;
+  }
+
+  .detail-modal-content {
+    width: 95%;
+    max-height: 85vh;
+    padding: 14px;
+  }
+
+  .detail-popup-table {
+    min-width: 700px;
+  }
+
+  .sender-list,
+  .scroll-panel {
+    max-height: 300px;
+  }
+
+  .perf-cols {
+    flex-direction: column;
+  }
+
+  .operator-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .live-clock {
+    font-size: 14px;
+  }
+
+  .topbar-logo {
+    font-size: 24px;
+  }
+}
