@@ -136,79 +136,330 @@ function updateChartTheme() {
 buildChart();
 
 // ── LATEST TABLE DATA AWAL ────────────────────────
-const rows = [
-  {
-    t: "23:33",
-    sender: "Bukalapak",
-    sup: "TOG_Dom_Dir",
-    acc: "GOT_OTP",
-    rec: 6,
-    nodr: 83,
-  },
-  {
-    t: "23:33",
-    sender: "UangMe",
-    sup: "TOG_Dom_Dir",
-    acc: "YULORE_HTTP",
-    rec: 3,
-    nodr: 0,
-  },
-  {
-    t: "23:33",
-    sender: "UangMe",
-    sup: "HTTP_YULORE",
-    acc: "SF_A2P_2",
-    rec: 3,
-    nodr: 0,
-  },
-  {
-    t: "23:33",
-    sender: "SINGA.ID",
-    sup: "HTTP_YULORE",
-    acc: "SF_A2P_2",
-    rec: 1,
-    nodr: 0,
-  },
-  {
-    t: "23:32",
-    sender: "Bukalapak",
-    sup: "TOG_Dom_Dir",
-    acc: "GOT_OTP",
-    rec: 6,
-    nodr: 17,
-  },
-  {
-    t: "23:32",
-    sender: "UangMe",
-    sup: "TOG_Dom_Dir",
-    acc: "YULORE_HTTP",
-    rec: 5,
-    nodr: 20,
-  },
-  {
-    t: "23:32",
-    sender: "SINGA.ID",
-    sup: "HTTP_YULORE",
-    acc: "SF_A2P_2",
-    rec: 3,
-    nodr: 0,
-  },
+
+const rows = [];
+
+const fakeSenders = [
+  "Bukalapak",
+  "Cashcepat",
+  "RupiahCepat",
+  "UangMe",
+  "SINGA.ID",
+  "BRI-NOTIF",
+  "Kredivo",
+  "Akulaku",
+  "Dana",
+  "ShopeePay",
+  "Jago",
+  "Livin",
 ];
 
-function showDetail(sender, acc) {
-  alert(`Menampilkan detail log untuk Sender: ${sender} | Account: ${acc}`);
+const fakeSuppliers = [
+  "TOG_DOM_DIR",
+  "HTTP_YULORE",
+  "HEYLOO_SIM_MKT",
+  "OMNI_WAGEN",
+  "INFOBIP_DOM",
+];
+
+const fakeAccounts = [
+  "GOT_OTP",
+  "YULORE_HTTP",
+  "SF_A2P_2",
+  "OMNI_WAGEN",
+  "INFOBIP",
+];
+
+for (let minute = 0; minute < 30; minute++) {
+  const now = new Date();
+
+  now.setMinutes(now.getMinutes() - minute);
+
+  const timeStr =
+    `${String(now.getHours()).padStart(2, "0")}:` +
+    `${String(now.getMinutes()).padStart(2, "0")}`;
+
+  const totalTransactions = Math.floor(Math.random() * 5) + 2;
+
+  for (let i = 0; i < totalTransactions; i++) {
+    rows.push({
+      t: timeStr,
+
+      sender: fakeSenders[Math.floor(Math.random() * fakeSenders.length)],
+
+      sup: fakeSuppliers[Math.floor(Math.random() * fakeSuppliers.length)],
+
+      acc: fakeAccounts[Math.floor(Math.random() * fakeAccounts.length)],
+
+      rec: Math.floor(Math.random() * 10) + 1,
+
+      nodr: Math.floor(Math.random() * 100),
+    });
+  }
 }
 
-const tbody = document.getElementById("latestTable");
-if (tbody) {
-  rows.forEach((r, i) => {
+let currentPage = 1;
+
+const rowsPerPage = 10;
+
+function toggleDetail(index) {
+  const oldModal = document.getElementById("detailModal");
+
+  if (oldModal) oldModal.remove();
+
+  const grouped = {};
+
+  rows.forEach((r) => {
+    if (!grouped[r.t]) {
+      grouped[r.t] = [];
+    }
+
+    grouped[r.t].push(r);
+  });
+
+  const times = Object.keys(grouped).sort().reverse();
+
+  const detailRows = grouped[times[index]];
+
+  const modal = document.createElement("div");
+
+  modal.id = "detailModal";
+
+  modal.className = "detail-modal";
+
+  modal.innerHTML = `
+
+    <div class="detail-modal-content">
+
+      <div class="detail-modal-header">
+
+        <div>
+
+          <div class="modal-title">
+            Transaction Detail
+          </div>
+
+          <div class="modal-subtitle">
+            ${times[index]}
+          </div>
+
+        </div>
+
+        <button
+          class="close-modal"
+          onclick="closeDetailModal()">
+
+          ✕
+
+        </button>
+
+      </div>
+
+      <table class="detail-popup-table">
+
+        <thead>
+
+          <tr>
+
+            <th>Sender</th>
+
+            <th>Supplier</th>
+
+            <th>Account</th>
+
+            <th>Records</th>
+
+            <th>No DR</th>
+
+          </tr>
+
+        </thead>
+
+        <tbody>
+
+          ${detailRows
+            .map(
+              (d) => `
+
+            <tr>
+
+              <td>${d.sender}</td>
+
+              <td>${d.sup}</td>
+
+              <td>${d.acc}</td>
+
+              <td>${d.rec}</td>
+
+              <td class="td-nodr ${d.nodr > 15 ? "high" : "ok"}">
+
+                ${d.nodr}%
+
+              </td>
+
+            </tr>
+
+          `,
+            )
+            .join("")}
+
+        </tbody>
+
+      </table>
+
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+}
+
+function closeDetailModal() {
+  const modal = document.getElementById("detailModal");
+
+  if (modal) modal.remove();
+}
+
+function renderLatestSummary() {
+  const tbody = document.getElementById("latestSummary");
+
+  if (!tbody) return;
+
+  tbody.innerHTML = "";
+
+  const grouped = {};
+
+  rows.forEach((r) => {
+    if (!grouped[r.t]) {
+      grouped[r.t] = [];
+    }
+
+    grouped[r.t].push(r);
+  });
+
+  const times = Object.keys(grouped).sort().reverse();
+
+  const totalPages = Math.ceil(times.length / rowsPerPage);
+
+  const start = (currentPage - 1) * rowsPerPage;
+
+  const end = start + rowsPerPage;
+
+  const paginatedTimes = times.slice(start, end);
+
+  paginatedTimes.forEach((time, index) => {
+    const detailRows = grouped[time];
+
+    let totalRecords = 0;
+
+    let totalNoDr = 0;
+
+    detailRows.forEach((d) => {
+      totalRecords += d.rec;
+
+      totalNoDr += d.nodr;
+    });
+
+    const avgNoDr = Math.round(totalNoDr / detailRows.length);
+
+    const delivered = 100 - avgNoDr;
+
     const tr = document.createElement("tr");
-    const cls = r.nodr > 15 ? "high" : "ok";
-    tr.onclick = () => showDetail(r.sender, r.acc);
-    tr.innerHTML = `<td class="td-num">${i + 1}</td><td class="td-time">${r.t}</td><td class="sender-col">${r.sender}</td><td class="sup-col">${r.sup}</td><td class="acc-col">${r.acc}</td><td class="td-num">${r.rec}</td><td class="td-nodr ${cls}">${r.nodr} %</td>`;
+
+    tr.innerHTML = `
+
+      <td>${start + index + 1}</td>
+
+      <td class="td-time">
+        ${time}
+      </td>
+
+      <td>${totalRecords}</td>
+
+      <td>${detailRows.length}</td>
+
+      <td class="td-nodr ${avgNoDr > 15 ? "high" : "ok"}">
+
+        ${avgNoDr}%
+
+      </td>
+
+      <td>
+
+        <div class="delivered-wrap">
+
+          <span class="td-nodr ok">
+
+            ${delivered}%
+
+          </span>
+
+          <button
+            class="btn-detail"
+            onclick="toggleDetail(${start + index})">
+
+            Detail
+
+          </button>
+
+        </div>
+
+      </td>
+    `;
+
     tbody.appendChild(tr);
   });
+
+  renderPagination(totalPages);
 }
+
+function renderPagination(totalPages) {
+  let pagination = document.getElementById("pagination");
+
+  if (!pagination) {
+    pagination = document.createElement("div");
+
+    pagination.id = "pagination";
+
+    pagination.className = "pagination-wrap";
+
+    document.querySelector(".latest-toolbar").appendChild(pagination);
+  }
+
+  pagination.innerHTML = `
+
+    <button
+      class="page-btn"
+      ${currentPage === 1 ? "disabled" : ""}
+      onclick="changePage(-1)">
+
+      Prev
+
+    </button>
+
+    <span class="page-info">
+
+      Page ${currentPage} / ${totalPages}
+
+    </span>
+
+    <button
+      class="page-btn"
+      ${currentPage === totalPages ? "disabled" : ""}
+      onclick="changePage(1)">
+
+      Next
+
+    </button>
+  `;
+}
+
+function changePage(direction) {
+  currentPage += direction;
+
+  renderLatestSummary();
+}
+
+renderLatestSummary();
 
 // ── OPERATOR PERFORMANCE ───────────────────────────
 const operators = [
