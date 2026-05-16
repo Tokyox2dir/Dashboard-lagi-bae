@@ -200,7 +200,18 @@ for (let minute = 0; minute < 30; minute++) {
 
 let currentPage = 1;
 
-const rowsPerPage = 10;
+let rowsPerPage = 10;
+
+function buildAccountLogUrl(account, detail) {
+  const params = new URLSearchParams({
+    account,
+    supplier: detail.sup,
+    sender: detail.sender,
+    time: detail.t,
+  });
+
+  return `#log?${params.toString()}`;
+}
 
 function toggleDetail(index) {
   const oldModal = document.getElementById("detailModal");
@@ -261,11 +272,11 @@ function toggleDetail(index) {
 
           <tr>
 
-            <th>Sender</th>
+            <th>Account</th>
 
             <th>Supplier</th>
 
-            <th>Account</th>
+            <th>Sender</th>
 
             <th>Records</th>
 
@@ -283,11 +294,15 @@ function toggleDetail(index) {
 
             <tr>
 
-              <td>${d.sender}</td>
+              <td>
+                <a class="account-log-link" href="${buildAccountLogUrl(d.acc, d)}">
+                  ${d.acc}
+                </a>
+              </td>
 
               <td>${d.sup}</td>
 
-              <td>${d.acc}</td>
+              <td>${d.sender}</td>
 
               <td>${d.rec}</td>
 
@@ -338,7 +353,9 @@ function renderLatestSummary() {
 
   const times = Object.keys(grouped).sort().reverse();
 
-  const totalPages = Math.ceil(times.length / rowsPerPage);
+  const totalPages = Math.max(1, Math.ceil(times.length / rowsPerPage));
+
+  if (currentPage > totalPages) currentPage = totalPages;
 
   const start = (currentPage - 1) * rowsPerPage;
 
@@ -410,6 +427,10 @@ function renderLatestSummary() {
   });
 
   renderPagination(totalPages);
+
+  document
+    .querySelector(".table-wrap")
+    ?.classList.toggle("is-scrollable", rowsPerPage > 10);
 }
 
 function renderPagination(totalPages) {
@@ -454,8 +475,26 @@ function renderPagination(totalPages) {
 }
 
 function changePage(direction) {
-  currentPage += direction;
+  const grouped = {};
 
+  rows.forEach((r) => {
+    if (!grouped[r.t]) grouped[r.t] = [];
+    grouped[r.t].push(r);
+  });
+
+  const totalPages = Math.max(
+    1,
+    Math.ceil(Object.keys(grouped).length / rowsPerPage),
+  );
+
+  currentPage = Math.min(Math.max(currentPage + direction, 1), totalPages);
+
+  renderLatestSummary();
+}
+
+function changeRowsPerPage(el) {
+  rowsPerPage = Number(el.value) || 10;
+  currentPage = 1;
   renderLatestSummary();
 }
 
@@ -724,27 +763,3 @@ function addLiveData() {
 }
 
 setInterval(addLiveData, 60000);
-
-// ── FITUR AUTO-SCROLL ──
-let isAutoScrollEnabled = true;
-function toggleAutoScroll(el) {
-  isAutoScrollEnabled = el.checked;
-  document.getElementById("scrollToggleIcon").textContent = el.checked
-    ? "🔄"
-    : "⏸️";
-}
-function initAutoScroll() {
-  const panels = document.querySelectorAll(".auto-scroll");
-  panels.forEach((panel) => {
-    setInterval(() => {
-      if (!isAutoScrollEnabled) return;
-      panel.scrollTop += 1;
-      if (panel.scrollTop + panel.clientHeight >= panel.scrollHeight - 1) {
-        setTimeout(() => {
-          if (isAutoScrollEnabled) panel.scrollTop = 0;
-        }, 2000);
-      }
-    }, 50);
-  });
-}
-window.addEventListener("load", initAutoScroll);

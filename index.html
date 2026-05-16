@@ -1,9 +1,13 @@
 <!doctype html>
 <html lang="en" data-theme="light">
   <head>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    
+
     <title>SMS Traffic Dashboard</title>
 
     <link
@@ -19,36 +23,10 @@
       <div class="topbar-left">
         <div class="topbar-logo">SMS·DASH</div>
         <div class="topbar-status"><span></span>LIVE</div>
-        <div class="topbar-search">
-          <input type="text" placeholder="Search sender, acc..." />
-        </div>
       </div>
       <div class="topbar-right">
         <div class="live-clock" id="clock">--:--:--</div>
 
-        <div
-          style="
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            margin-left: 10px;
-          "
-        >
-          <span style="font-size: 10px; font-weight: 700; color: var(--text3)"
-            >SCROLL</span
-          >
-          <label class="dark-toggle" title="Matikan/Nyalakan Auto Scroll">
-            <input
-              type="checkbox"
-              id="scrollToggle"
-              onchange="toggleAutoScroll(this)"
-              checked
-            />
-            <div class="toggle-track">
-              <div class="toggle-thumb" id="scrollToggleIcon">🔄</div>
-            </div>
-          </label>
-        </div>
 
         <div
           style="
@@ -149,7 +127,7 @@
 
       <div class="card sender-card">
         <div class="card-header">📊 Sender Stats</div>
-        <div class="sender-list scroll-panel auto-scroll">
+        <div class="sender-list scroll-panel">
           <div class="sender-item">
             <div class="sender-name">TIG_DOM-B-SULSELBAR</div>
             <div class="sender-change">-13.22%</div>
@@ -243,7 +221,7 @@
 
         <div class="alert-section">
           <div class="alert-section-title">Sender Stop</div>
-          <div class="scroll-panel auto-scroll" style="max-height: 180px">
+          <div class="scroll-panel" style="max-height: 180px">
             <div class="alert-item">
               <div class="alert-dot"></div>
               <div class="alert-name">YULORE_HTTP-IVOJI</div>
@@ -354,7 +332,7 @@
 
         <div class="alert-section">
           <div class="alert-section-title">Account Stop</div>
-          <div class="scroll-panel auto-scroll" style="max-height: 180px">
+          <div class="scroll-panel" style="max-height: 180px">
             <div class="alert-item">
               <div class="alert-dot yellow"></div>
               <div class="alert-name">SPOLIVE_WAGEN</div>
@@ -422,7 +400,7 @@
           <div class="alert-section-title">Sender No Dr</div>
           <div
             id="senderNoDr"
-            class="scroll-panel auto-scroll"
+            class="scroll-panel"
             style="max-height: 150px"
           ></div>
         </div>
@@ -431,7 +409,7 @@
           <div class="alert-section-title">Gateway No Dr</div>
           <div
             id="gatewayNoDr"
-            class="scroll-panel auto-scroll"
+            class="scroll-panel"
             style="max-height: 150px"
           ></div>
         </div>
@@ -444,9 +422,18 @@
           </div>
 
           <div class="latest-right">
+            <label class="rows-control">
+              <span>Rows</span>
+              <select id="rowsPerPageSelect" onchange="changeRowsPerPage(this)">
+                <option value="10" selected>10</option>
+                <option value="15">15</option>
+                <option value="20">20</option>
+                <option value="30">30</option>
+              </select>
+            </label>
+
             <div id="pagination" class="pagination-wrap"></div>
 
-            <button class="btn-export">Export CSV</button>
           </div>
         </div>
         <div class="table-wrap">
@@ -477,12 +464,12 @@
         <div class="perf-cols">
           <div class="perf-col">
             <div class="perf-col-title">Client Performance</div>
-            <div class="scroll-panel auto-scroll" id="clientPerf"></div>
+            <div class="scroll-panel" id="clientPerf"></div>
           </div>
 
           <div class="perf-col">
             <div class="perf-col-title">Supplier Performance</div>
-            <div class="scroll-panel auto-scroll" id="supplierPerf"></div>
+            <div class="scroll-panel" id="supplierPerf"></div>
           </div>
         </div>
       </div>
