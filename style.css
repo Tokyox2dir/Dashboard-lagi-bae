@@ -208,6 +208,13 @@ td { padding: 10px 14px; border-bottom: 1px solid var(--border); color: var(--te
 .legend-val { font-weight: 800; color: var(--text); }
 
 /* --- CLIENT/SUPPLIER PERF (Melebar) --- */
+.perf-header { justify-content: space-between; }
+.perf-legend { display: flex; align-items: center; gap: 14px; font-size: 10px; font-weight: 700; letter-spacing: 0.8px; color: var(--text3); }
+.perf-legend span { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
+.perf-legend-dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+.perf-legend-dot.delivered { background: var(--green); }
+.perf-legend-dot.sent { background: var(--yellow); }
+.perf-legend-dot.undeliv { background: var(--red); }
 .perf-cols { 
   display: grid; 
   grid-template-columns: 1fr 1fr; /* Kembali Bersebelahan Kiri-Kanan */
