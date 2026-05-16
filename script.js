@@ -43,6 +43,13 @@ function formatPercent(value) {
   return Number(value).toFixed(2).replace(/\.00$/, "");
 }
 
+function formatEntityName(name) {
+  return String(name).replace(
+    /^([A-Za-z0-9_]+(?:-[A-Z])?)-(.+)$/,
+    "$1 - $2",
+  );
+}
+
 // ── CLOCK ──────────────────────────────────────────
 function updateClock() {
   document.getElementById("clock").textContent = formatClockTime();
@@ -73,6 +80,7 @@ function buildChart() {
   const isDark = document.documentElement.getAttribute("data-theme") === "dark";
   const gridColor = isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)";
   const tickColor = isDark ? "#6e7681" : "#718096";
+  const timeTickColor = isDark ? "#cbd5e1" : "#334155";
 
   const ctx = document.getElementById("trafficChart").getContext("2d");
   if (trafficChart) trafficChart.destroy();
@@ -136,8 +144,8 @@ function buildChart() {
       scales: {
         x: {
           ticks: {
-            color: tickColor,
-            font: { family: "JetBrains Mono", size: 8 },
+            color: timeTickColor,
+            font: { family: "JetBrains Mono", size: 13, weight: "900" },
             maxRotation: 0,
           },
           grid: { color: gridColor },
@@ -731,7 +739,7 @@ function renderStopAlerts(title, pool, level, size = 7) {
       (name) => `
         <div class="alert-item ${level}" data-severity="${level}">
           <div class="alert-dot ${level}"></div>
-          <div class="alert-name">${name}</div>
+          <div class="alert-name">${formatEntityName(name)}</div>
           <span class="severity-badge ${level}">${getSeverityLabel(level)}</span>
           <div class="alert-time">${randomRecentTime()}</div>
         </div>
@@ -867,7 +875,7 @@ function renderSenderStats() {
 
         return `
           <div class="sender-row ${sender.isLive ? "live-tick" : ""}">
-            <div class="sender-client"><span class="sender-dot ${deltaClass}"></span>${sender.name}</div>
+            <div class="sender-client"><span class="sender-dot ${deltaClass}"></span>${formatEntityName(sender.name)}</div>
             <div class="sender-today">${sender.today.toLocaleString()} <span class="mini-delta ${deltaClass}">${delta >= 0 ? "+" : ""}${delta.toFixed(0)}</span></div>
             <div class="sender-yesterday">${sender.yesterday.toLocaleString()}</div>
             <div><span class="delta-pill ${deltaClass}">${delta >= 0 ? "+" : ""}${delta.toFixed(1)}%</span></div>
@@ -991,14 +999,23 @@ function addLiveData() {
   const deliv = 100 - nodr;
 
   if (trafficChart) {
-    trafficChart.data.labels.push(timeStr);
-    trafficChart.data.labels.shift();
-    trafficChart.data.datasets[0].data.push(sms);
-    trafficChart.data.datasets[0].data.shift();
-    trafficChart.data.datasets[1].data.push(deliv);
-    trafficChart.data.datasets[1].data.shift();
-    trafficChart.data.datasets[2].data.push(nodr);
-    trafficChart.data.datasets[2].data.shift();
+    const lastIndex = trafficChart.data.labels.length - 1;
+
+    if (trafficChart.data.labels[lastIndex] === timeStr) {
+      trafficChart.data.datasets[0].data[lastIndex] = sms;
+      trafficChart.data.datasets[1].data[lastIndex] = deliv;
+      trafficChart.data.datasets[2].data[lastIndex] = nodr;
+    } else {
+      trafficChart.data.labels.push(timeStr);
+      trafficChart.data.labels.shift();
+      trafficChart.data.datasets[0].data.push(sms);
+      trafficChart.data.datasets[0].data.shift();
+      trafficChart.data.datasets[1].data.push(deliv);
+      trafficChart.data.datasets[1].data.shift();
+      trafficChart.data.datasets[2].data.push(nodr);
+      trafficChart.data.datasets[2].data.shift();
+    }
+
     trafficChart.update("none");
   }
 
