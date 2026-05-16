@@ -25,20 +25,11 @@
         <div class="topbar-status"><span></span>LIVE</div>
       </div>
       <div class="topbar-right">
+        <div class="last-updated" id="lastUpdated">Updated --:--:--</div>
         <div class="live-clock" id="clock">--:--:--</div>
 
-
-        <div
-          style="
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            margin-left: 10px;
-          "
-        >
-          <span style="font-size: 10px; font-weight: 700; color: var(--text3)"
-            >THEME</span
-          >
+        <div class="topbar-control">
+          <span>THEME</span>
           <label class="dark-toggle">
             <input
               type="checkbox"
@@ -60,11 +51,8 @@
 
     <div class="filter-bar">
       <div class="filter-group">
-        <label>Status</label>
-        <select id="filterStatus">
-          <option value="active">Active</option>
-          <option value="inactive">Inactive</option>
-        </select>
+        <label>Date</label>
+        <input type="date" id="filterDate" />
       </div>
 
       <div class="filter-group">
@@ -217,7 +205,13 @@
       </div>
 
       <div class="card alert-card">
-        <div class="card-header">🔔 Alerts</div>
+        <div class="card-header alert-header">
+          <span>🔔 Alerts</span>
+          <div class="alert-summary">
+            <span class="alert-count critical" id="criticalCount">0 High</span>
+            <span class="alert-count warning" id="warningCount">0 Medium</span>
+          </div>
+        </div>
 
         <div class="alert-section">
           <div class="alert-section-title">Sender Stop</div>

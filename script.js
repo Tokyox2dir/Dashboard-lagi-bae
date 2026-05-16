@@ -8,14 +8,48 @@ function toggleDark(el) {
   updateChartTheme();
 }
 
+let highlightedTime = null;
+
+function formatClockTime(date = new Date()) {
+  return date.toTimeString().slice(0, 8);
+}
+
+function updateLastUpdated(date = new Date()) {
+  const el = document.getElementById("lastUpdated");
+  if (el) el.textContent = `Updated ${formatClockTime(date)}`;
+}
+
+function getNoDrLevel(value) {
+  if (value > 50) return "high";
+  if (value >= 20) return "medium";
+  return "ok";
+}
+
+function getSeverityLabel(level) {
+  if (level === "high") return "High";
+  if (level === "medium") return "Medium";
+  return "Low";
+}
+
+function randomInt(min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function clamp(value, min, max) {
+  return Math.min(max, Math.max(min, value));
+}
+
+function formatPercent(value) {
+  return Number(value).toFixed(2).replace(/\.00$/, "");
+}
+
 // ── CLOCK ──────────────────────────────────────────
 function updateClock() {
-  document.getElementById("clock").textContent = new Date()
-    .toTimeString()
-    .slice(0, 8);
+  document.getElementById("clock").textContent = formatClockTime();
 }
 setInterval(updateClock, 1000);
 updateClock();
+updateLastUpdated();
 
 // ── TRAFFIC CHART (Waktu Nyata) ────────────────────
 const labels = [];
@@ -197,6 +231,8 @@ for (let minute = 0; minute < 30; minute++) {
     });
   }
 }
+
+highlightedTime = null;
 
 let currentPage = 1;
 
@@ -381,6 +417,9 @@ function renderLatestSummary() {
     const delivered = 100 - avgNoDr;
 
     const tr = document.createElement("tr");
+    if (time === highlightedTime && currentPage === 1) {
+      tr.className = "row-new";
+    }
 
     tr.innerHTML = `
 
@@ -394,7 +433,7 @@ function renderLatestSummary() {
 
       <td>${detailRows.length}</td>
 
-      <td class="td-nodr ${avgNoDr > 15 ? "high" : "ok"}">
+      <td class="td-nodr ${getNoDrLevel(avgNoDr)}">
 
         ${avgNoDr}%
 
@@ -510,10 +549,12 @@ const operators = [
   { name: "AXIS", total: 3200, delivered: 65, sent: 22, undeliv: 13 },
 ];
 const opGrid = document.getElementById("operatorGrid");
-if (opGrid) {
+function renderOperators() {
+  if (!opGrid) return;
+  opGrid.innerHTML = "";
   operators.forEach((op) => {
     const el = document.createElement("div");
-    el.className = "operator-item";
+    el.className = `operator-item ${op.isLive ? "live-tick" : ""}`;
     el.innerHTML = `
       <div class="operator-header">
         <div class="operator-name">${op.name}</div>
@@ -527,11 +568,29 @@ if (opGrid) {
       <div class="operator-legend">
         <span><span class="legend-dot delivered"></span>Dlvr <span class="legend-val">${op.delivered}%</span></span>
         <span><span class="legend-dot sent"></span>Sent <span class="legend-val">${op.sent}%</span></span>
-        <span><span class="legend-dot undeliv"></span>Fail <span class="legend-val">${op.undeliv}%</span></span>
+        <span><span class="legend-dot undeliv"></span>Undelivered <span class="legend-val">${op.undeliv}%</span></span>
       </div>
     `;
     opGrid.appendChild(el);
   });
+}
+renderOperators();
+
+function updateOperatorTraffic() {
+  operators.forEach((op) => {
+    op.total = Math.max(500, op.total + randomInt(-320, 520));
+    op.delivered = clamp(op.delivered + randomInt(-4, 5), 45, 92);
+    op.sent = clamp(op.sent + randomInt(-3, 3), 4, 35);
+    op.undeliv = Math.max(0, 100 - op.delivered - op.sent);
+    op.isLive = true;
+  });
+  renderOperators();
+  window.setTimeout(() => {
+    operators.forEach((op) => {
+      op.isLive = false;
+    });
+    renderOperators();
+  }, 900);
 }
 
 // ── SENDER & GATEWAY NO DR (DATA YANG KEMARIN HILANG) ──
@@ -581,18 +640,126 @@ function renderNoDr(data, containerId) {
   const el = document.getElementById(containerId);
   if (!el) return;
   el.innerHTML = "";
-  data.forEach((d) => {
-    let level = "low";
-    if (d.val >= 80) level = "high";
-    else if (d.val >= 40) level = "medium";
+  data.slice(0, 8).forEach((d) => {
+    const level = getNoDrLevel(d.val);
+    const severity = getSeverityLabel(level);
     const div = document.createElement("div");
-    div.className = "alert-item";
-    div.innerHTML = `<div class="alert-dot ${level}"></div><div class="alert-name">${d.name}</div><div class="alert-val">${d.val}%</div>`;
+    div.className = `alert-item ${level}`;
+    div.dataset.severity = level;
+    div.innerHTML = `<div class="alert-dot ${level}"></div><div class="alert-name">${d.name}</div><span class="severity-badge ${level}">${severity}</span><div class="alert-val">${d.val}%</div>`;
     el.appendChild(div);
   });
 }
 renderNoDr(senderNoDrData, "senderNoDr");
 renderNoDr(gatewayNoDrData, "gatewayNoDr");
+
+function updateNoDrTraffic() {
+  [senderNoDrData, gatewayNoDrData].forEach((data) => {
+    data.forEach((d) => {
+      d.val = clamp(d.val + randomInt(-18, 22), 0, 100);
+    });
+    data.sort((a, b) => b.val - a.val);
+  });
+
+  renderNoDr(senderNoDrData, "senderNoDr");
+  renderNoDr(gatewayNoDrData, "gatewayNoDr");
+  updateAlertSummary();
+}
+
+function enhanceStaticAlerts() {
+  document.querySelectorAll(".alert-section").forEach((section) => {
+    const title = section.querySelector(".alert-section-title")?.textContent || "";
+    let level = "";
+    if (title.includes("Sender Stop")) level = "high";
+    if (title.includes("Account Stop")) level = "medium";
+    if (!level) return;
+
+    section.querySelectorAll(".alert-item").forEach((item) => {
+      if (item.querySelector(".severity-badge")) return;
+      item.classList.add(level);
+      item.dataset.severity = level;
+
+      const badge = document.createElement("span");
+      badge.className = `severity-badge ${level}`;
+      badge.textContent = getSeverityLabel(level);
+
+      const time = item.querySelector(".alert-time, .alert-val");
+      item.insertBefore(badge, time);
+    });
+  });
+}
+
+const senderStopPool = [
+  "YULORE_HTTP-IVOJI",
+  "SPOLIVE_WAGEN-wagen",
+  "GOT_OTP-Akulaku",
+  "Omniwara_INT-SAMSUNG",
+  "SF_A2P_2-IVOJI",
+  "Sahridaya_WAGEN-wagen",
+  "TIG_DOM-SAMIR",
+  "HTTP_YULORE-UangMe",
+  "SF_A2P_2-Cashcepat",
+  "TOG_DOM-Bukalapak",
+];
+
+const accountStopPool = [
+  "SPOLIVE_WAGEN",
+  "Omniwara_INT",
+  "Sahridaya_WAGEN",
+  "YULORE_HTTP",
+  "SF_A2P_2",
+  "GOT_OTP",
+  "TIG_DOM",
+  "HTTP_YULORE",
+];
+
+function randomRecentTime() {
+  const date = new Date(Date.now() - randomInt(0, 1000 * 60 * 45));
+  return formatClockTime(date);
+}
+
+function renderStopAlerts(title, pool, level, size = 7) {
+  const section = [...document.querySelectorAll(".alert-section")].find((item) =>
+    item.querySelector(".alert-section-title")?.textContent.includes(title),
+  );
+  const panel = section?.querySelector(".scroll-panel");
+  if (!panel) return;
+
+  const shuffled = [...pool].sort(() => Math.random() - 0.5).slice(0, size);
+  panel.innerHTML = shuffled
+    .map(
+      (name) => `
+        <div class="alert-item ${level}" data-severity="${level}">
+          <div class="alert-dot ${level}"></div>
+          <div class="alert-name">${name}</div>
+          <span class="severity-badge ${level}">${getSeverityLabel(level)}</span>
+          <div class="alert-time">${randomRecentTime()}</div>
+        </div>
+      `,
+    )
+    .join("");
+}
+
+function updateStopAlerts() {
+  renderStopAlerts("Sender Stop", senderStopPool, "high", 7);
+  renderStopAlerts("Account Stop", accountStopPool, "medium", 6);
+  updateAlertSummary();
+}
+
+function updateAlertSummary() {
+  const critical = document.querySelectorAll('.alert-item[data-severity="high"]').length;
+  const warning = document.querySelectorAll('.alert-item[data-severity="medium"]').length;
+
+  const criticalEl = document.getElementById("criticalCount");
+  const warningEl = document.getElementById("warningCount");
+
+  if (criticalEl) criticalEl.textContent = `${critical} High`;
+  if (warningEl) warningEl.textContent = `${warning} Medium`;
+}
+
+enhanceStaticAlerts();
+updateStopAlerts();
+updateAlertSummary();
 
 // ── CLIENT & SUPPLIER PERF (DATA YANG KEMARIN HILANG) ──
 const clients = [
@@ -624,11 +791,12 @@ const suppliers = [
 function renderPerf(data, containerId) {
   const el = document.getElementById(containerId);
   if (!el) return;
+  el.innerHTML = "";
   data.forEach((d) => {
     const div = document.createElement("div");
-    div.className = "perf-item";
+    div.className = `perf-item ${d.isLive ? "live-tick" : ""}`;
     div.innerHTML = `
-      <div class="perf-name">${d.name}<div class="perf-pct-trio"><span class="pct-g">${d.g}%</span>·<span class="pct-y">${d.y}%</span>·<span class="pct-r">${d.r}%</span></div></div>
+      <div class="perf-name">${d.name}<div class="perf-pct-trio"><span class="pct-g">${formatPercent(d.g)}%</span>·<span class="pct-y">${formatPercent(d.y)}%</span>·<span class="pct-r">${formatPercent(d.r)}%</span></div></div>
       <div class="perf-bar-wrap"><div class="perf-bar g" style="width:${d.g}%"></div><div class="perf-bar y" style="width:${d.y}%"></div><div class="perf-bar r" style="width:${d.r}%"></div></div>
     `;
     el.appendChild(div);
@@ -636,6 +804,82 @@ function renderPerf(data, containerId) {
 }
 renderPerf(clients, "clientPerf");
 renderPerf(suppliers, "supplierPerf");
+
+function rebalancePerformance(item) {
+  const delivered = clamp(item.g + randomInt(-8, 9), 5, 100);
+  const sent = clamp(item.y + randomInt(-7, 7), 0, 100 - delivered);
+  const undeliv = Math.max(0, 100 - delivered - sent);
+
+  item.g = Number(delivered.toFixed(2));
+  item.y = Number(sent.toFixed(2));
+  item.r = Number(undeliv.toFixed(2));
+}
+
+function updatePerformanceTraffic() {
+  clients.forEach((item) => {
+    rebalancePerformance(item);
+    item.isLive = true;
+  });
+  suppliers.forEach((item) => {
+    rebalancePerformance(item);
+    item.isLive = true;
+  });
+  renderPerf(clients, "clientPerf");
+  renderPerf(suppliers, "supplierPerf");
+  window.setTimeout(() => {
+    [...clients, ...suppliers].forEach((item) => {
+      item.isLive = false;
+    });
+    renderPerf(clients, "clientPerf");
+    renderPerf(suppliers, "supplierPerf");
+  }, 900);
+}
+
+const senderStats = [...document.querySelectorAll(".sender-item")].map((item) => {
+  const name = item.querySelector(".sender-name")?.textContent.trim() || "";
+  const arrow = item.querySelector(".sender-arrow")?.textContent.trim() || "0 → 0";
+  const values = arrow.match(/\d+/g) || ["0", "0"];
+
+  return {
+    name,
+    before: Number(values[0]),
+    after: Number(values[1]),
+    el: item,
+  };
+});
+
+function renderSenderStats() {
+  senderStats.forEach((sender) => {
+    const change = sender.before
+      ? ((sender.after - sender.before) / sender.before) * 100
+      : 0;
+    const changeEl = sender.el.querySelector(".sender-change");
+    const arrowEl = sender.el.querySelector(".sender-arrow");
+
+    if (changeEl) {
+      changeEl.textContent = `${change >= 0 ? "+" : ""}${change.toFixed(2)}%`;
+      changeEl.classList.toggle("pos", change >= 0);
+    }
+
+    if (arrowEl) {
+      arrowEl.textContent = `${sender.before} → ${sender.after}`;
+    }
+  });
+}
+
+function updateSenderStatsTraffic() {
+  senderStats.forEach((sender) => {
+    sender.before = sender.after;
+    sender.after = Math.max(0, sender.after + randomInt(-420, 520));
+    sender.el.classList.add("live-tick");
+    window.setTimeout(() => sender.el.classList.remove("live-tick"), 900);
+  });
+
+  senderStats.sort((a, b) => Math.abs(b.after - b.before) - Math.abs(a.after - a.before));
+  const list = document.querySelector(".sender-list");
+  if (list) senderStats.forEach((sender) => list.appendChild(sender.el));
+  renderSenderStats();
+}
 
 // ── 🔥 LOGIKA FILTER GLOBAL ──
 function checkMatch(textSender, textAcc, textSup) {
@@ -689,7 +933,7 @@ function applyFilter() {
 }
 
 function clearFilter() {
-  document.getElementById("filterStatus").value = "active";
+  setDefaultFilterDate();
   document.getElementById("filterOperator").value = "all";
   document.getElementById("filterAccount").value = "all";
   document.getElementById("filterSender").value = "all";
@@ -698,7 +942,15 @@ function clearFilter() {
   applyFilter();
 }
 
-// ── ⚡ UPDATE DATA SINKRON TIAP 1 MENIT ─────────────────
+function setDefaultFilterDate() {
+  const dateInput = document.getElementById("filterDate");
+  if (!dateInput) return;
+  dateInput.value = new Date().toISOString().slice(0, 10);
+}
+
+setDefaultFilterDate();
+
+// ── ⚡ UPDATE DATA SINKRON LIVE ─────────────────
 const sendersRT = [
   "Bukalapak",
   "Cashcepat",
@@ -735,31 +987,46 @@ function addLiveData() {
     trafficChart.update("none");
   }
 
-  const tbody = document.getElementById("latestTable");
-  if (!tbody) return;
-
   const sender = sendersRT[Math.floor(Math.random() * sendersRT.length)];
   const sup = suppliersRT[Math.floor(Math.random() * suppliersRT.length)];
   const acc = accountsRT[Math.floor(Math.random() * accountsRT.length)];
   const rec = Math.floor(Math.random() * 10) + 1;
 
-  const tr = document.createElement("tr");
-  const cls = nodr > 70 ? "high" : "ok";
-  tr.onclick = () => showDetail(sender, acc);
-
-  tr.innerHTML = `<td class="td-num">1</td><td class="td-time">${timeStr}</td><td class="sender-col">${sender}</td><td class="sup-col">${sup}</td><td class="acc-col">${acc}</td><td class="td-num">${rec}</td><td class="td-nodr ${cls}">${nodr}%</td>`;
-
-  if (!checkMatch(sender, acc, sup)) {
-    tr.style.display = "none";
-  }
-
-  tbody.insertBefore(tr, tbody.firstChild);
-  if (tbody.children.length > 15) tbody.removeChild(tbody.lastChild);
-
-  let count = 1;
-  [...tbody.children].forEach((row) => {
-    row.children[0].textContent = count++;
+  rows.unshift({
+    t: timeStr,
+    sender,
+    sup,
+    acc,
+    rec,
+    nodr,
   });
+
+  if (rows.length > 180) rows.length = 180;
+
+  highlightedTime = timeStr;
+  currentPage = 1;
+  updateLastUpdated(now);
+  renderLatestSummary();
+
+  window.setTimeout(() => {
+    if (highlightedTime === timeStr) {
+      highlightedTime = null;
+      renderLatestSummary();
+    }
+  }, 6000);
+
 }
 
-setInterval(addLiveData, 60000);
+function simulateDashboardTraffic() {
+  updateSenderStatsTraffic();
+  updateOperatorTraffic();
+  updateNoDrTraffic();
+  updatePerformanceTraffic();
+
+  if (Math.random() > 0.35) updateStopAlerts();
+  updateLastUpdated();
+}
+
+setInterval(addLiveData, 8000);
+setInterval(simulateDashboardTraffic, 5000);
+simulateDashboardTraffic();
