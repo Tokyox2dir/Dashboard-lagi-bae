@@ -842,44 +842,59 @@ const senderStats = [...document.querySelectorAll(".sender-item")].map((item) =>
 
   return {
     name,
-    before: Number(values[0]),
-    after: Number(values[1]),
-    el: item,
+    yesterday: Number(values[0]),
+    today: Number(values[1]),
   };
 });
 
 function renderSenderStats() {
-  senderStats.forEach((sender) => {
-    const change = sender.before
-      ? ((sender.after - sender.before) / sender.before) * 100
-      : 0;
-    const changeEl = sender.el.querySelector(".sender-change");
-    const arrowEl = sender.el.querySelector(".sender-arrow");
+  const list = document.querySelector(".sender-list");
+  if (!list) return;
 
-    if (changeEl) {
-      changeEl.textContent = `${change >= 0 ? "+" : ""}${change.toFixed(2)}%`;
-      changeEl.classList.toggle("pos", change >= 0);
-    }
+  list.innerHTML = `
+    <div class="sender-table-head">
+      <span>Client</span>
+      <span>Today</span>
+      <span>Yesterday</span>
+      <span>Delta</span>
+    </div>
+    ${senderStats
+      .map((sender) => {
+        const delta = sender.yesterday
+          ? ((sender.today - sender.yesterday) / sender.yesterday) * 100
+          : 0;
+        const deltaClass = delta >= 0 ? "pos" : "neg";
 
-    if (arrowEl) {
-      arrowEl.textContent = `${sender.before} → ${sender.after}`;
-    }
-  });
+        return `
+          <div class="sender-row ${sender.isLive ? "live-tick" : ""}">
+            <div class="sender-client"><span class="sender-dot ${deltaClass}"></span>${sender.name}</div>
+            <div class="sender-today">${sender.today.toLocaleString()} <span class="mini-delta ${deltaClass}">${delta >= 0 ? "+" : ""}${delta.toFixed(0)}</span></div>
+            <div class="sender-yesterday">${sender.yesterday.toLocaleString()}</div>
+            <div><span class="delta-pill ${deltaClass}">${delta >= 0 ? "+" : ""}${delta.toFixed(1)}%</span></div>
+          </div>
+        `;
+      })
+      .join("")}
+  `;
 }
 
 function updateSenderStatsTraffic() {
   senderStats.forEach((sender) => {
-    sender.before = sender.after;
-    sender.after = Math.max(0, sender.after + randomInt(-420, 520));
-    sender.el.classList.add("live-tick");
-    window.setTimeout(() => sender.el.classList.remove("live-tick"), 900);
+    sender.yesterday = sender.today;
+    sender.today = Math.max(0, sender.today + randomInt(-420, 520));
+    sender.isLive = true;
   });
 
-  senderStats.sort((a, b) => Math.abs(b.after - b.before) - Math.abs(a.after - a.before));
-  const list = document.querySelector(".sender-list");
-  if (list) senderStats.forEach((sender) => list.appendChild(sender.el));
+  senderStats.sort((a, b) => b.today - a.today);
   renderSenderStats();
+  window.setTimeout(() => {
+    senderStats.forEach((sender) => {
+      sender.isLive = false;
+    });
+    renderSenderStats();
+  }, 900);
 }
+renderSenderStats();
 
 // ── 🔥 LOGIKA FILTER GLOBAL ──
 function checkMatch(textSender, textAcc, textSup) {
