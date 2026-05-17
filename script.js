@@ -1226,12 +1226,13 @@ function renderSenderStats() {
         const delta = sender.yesterday
           ? ((sender.today - sender.yesterday) / sender.yesterday) * 100
           : 0;
+        const deltaCount = sender.today - sender.yesterday;
         const deltaClass = delta >= 0 ? "pos" : "neg";
 
         return `
           <div class="sender-row ${sender.isLive ? "live-tick" : ""}">
             <div class="sender-client"><span class="sender-dot ${deltaClass}"></span>${formatEntityName(sender.name)}</div>
-            <div class="sender-today">${sender.today.toLocaleString()} <span class="mini-delta ${deltaClass}">${delta >= 0 ? "+" : ""}${delta.toFixed(0)}</span></div>
+            <div class="sender-today">${sender.today.toLocaleString()} <span class="mini-delta ${deltaClass}">${deltaCount >= 0 ? "+" : ""}${deltaCount.toLocaleString()}</span></div>
             <div class="sender-yesterday">${sender.yesterday.toLocaleString()}</div>
             <div><span class="delta-pill ${deltaClass}">${delta >= 0 ? "+" : ""}${delta.toFixed(1)}%</span></div>
           </div>
