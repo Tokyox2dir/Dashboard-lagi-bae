@@ -14,6 +14,13 @@ function formatClockTime(date = new Date()) {
   return date.toTimeString().slice(0, 8);
 }
 
+function formatInputDate(date = new Date()) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
 function updateLastUpdated(date = new Date()) {
   const el = document.getElementById("lastUpdated");
   if (el) el.textContent = `Updated ${formatClockTime(date)}`;
@@ -212,6 +219,16 @@ const fakeAccounts = [
   "INFOBIP",
 ];
 
+const fakeOperatorsRT = ["TELKOMSEL", "THREE", "SMARTFREN", "INDOSAT", "XL", "AXIS"];
+
+const fakeGatewaysRT = [
+  "TOG_DOM_DIR",
+  "HTTP_YULORE",
+  "HEYLOO_SIM_MKT",
+  "OMNI_WAGEN",
+  "INFOBIP_DOM",
+];
+
 for (let minute = 0; minute < 30; minute++) {
   const now = new Date();
 
@@ -227,11 +244,17 @@ for (let minute = 0; minute < 30; minute++) {
     rows.push({
       t: timeStr,
 
+      date: formatInputDate(now),
+
       sender: fakeSenders[Math.floor(Math.random() * fakeSenders.length)],
 
       sup: fakeSuppliers[Math.floor(Math.random() * fakeSuppliers.length)],
 
       acc: fakeAccounts[Math.floor(Math.random() * fakeAccounts.length)],
+
+      operator: fakeOperatorsRT[Math.floor(Math.random() * fakeOperatorsRT.length)],
+
+      gateway: fakeGatewaysRT[Math.floor(Math.random() * fakeGatewaysRT.length)],
 
       rec: Math.floor(Math.random() * 10) + 1,
 
@@ -262,19 +285,13 @@ function toggleDetail(index) {
 
   if (oldModal) oldModal.remove();
 
-  const grouped = {};
-
-  rows.forEach((r) => {
-    if (!grouped[r.t]) {
-      grouped[r.t] = [];
-    }
-
-    grouped[r.t].push(r);
-  });
+  const grouped = groupRowsByTime();
 
   const times = Object.keys(grouped).sort().reverse();
 
   const detailRows = grouped[times[index]];
+
+  if (!detailRows) return;
 
   const modal = document.createElement("div");
 
@@ -378,16 +395,59 @@ function closeDetailModal() {
   if (modal) modal.remove();
 }
 
-function renderLatestSummary() {
-  const tbody = document.getElementById("latestSummary");
+function normalizeFilterValue(value) {
+  return String(value || "all")
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, "_");
+}
 
-  if (!tbody) return;
+function getFilterValue(id) {
+  return normalizeFilterValue(document.getElementById(id)?.value);
+}
 
-  tbody.innerHTML = "";
+function getActiveFilters() {
+  return {
+    date: document.getElementById("filterDate")?.value || "",
+    operator: getFilterValue("filterOperator"),
+    account: getFilterValue("filterAccount"),
+    sender: getFilterValue("filterSender"),
+    supplier: getFilterValue("filterSupplier"),
+    gateway: getFilterValue("filterGateway"),
+  };
+}
 
+function hasActiveFilter(filters = getActiveFilters()) {
+  return Object.entries(filters).some(([key, value]) =>
+    key === "date" ? value && value !== formatInputDate() : value !== "all",
+  );
+}
+
+function matchesFilter(value, filterValue) {
+  if (filterValue === "all") return true;
+  return normalizeFilterValue(value).includes(filterValue);
+}
+
+function rowMatchesFilters(row, filters = getActiveFilters()) {
+  return (
+    (!filters.date || row.date === filters.date) &&
+    matchesFilter(row.operator, filters.operator) &&
+    matchesFilter(row.acc, filters.account) &&
+    matchesFilter(row.sender, filters.sender) &&
+    matchesFilter(row.sup, filters.supplier) &&
+    matchesFilter(row.gateway, filters.gateway)
+  );
+}
+
+function getFilteredRows() {
+  const filters = getActiveFilters();
+  return rows.filter((row) => rowMatchesFilters(row, filters));
+}
+
+function groupRowsByTime(sourceRows = getFilteredRows()) {
   const grouped = {};
 
-  rows.forEach((r) => {
+  sourceRows.forEach((r) => {
     if (!grouped[r.t]) {
       grouped[r.t] = [];
     }
@@ -395,7 +455,59 @@ function renderLatestSummary() {
     grouped[r.t].push(r);
   });
 
+  return grouped;
+}
+
+function renderEmptyState(el, message) {
+  if (!el) return;
+  if (el.tagName === "TBODY") {
+    el.innerHTML = `<tr><td class="empty-state" colspan="6">${message}</td></tr>`;
+    return;
+  }
+  el.innerHTML = `<div class="empty-state">${message}</div>`;
+}
+
+function entityMatchesFilters(name, filters = getActiveFilters(), scope = {}) {
+  const fullName = normalizeFilterValue(name);
+
+  return (
+    matchesFilter(scope.operator || fullName, filters.operator) &&
+    matchesFilter(scope.account || fullName, filters.account) &&
+    matchesFilter(scope.sender || fullName, filters.sender) &&
+    matchesFilter(scope.supplier || fullName, filters.supplier) &&
+    matchesFilter(scope.gateway || fullName, filters.gateway)
+  );
+}
+
+function filterByRows(data, key, fallbackMatcher) {
+  const filters = getActiveFilters();
+  const filteredRows = getFilteredRows();
+  const active = hasActiveFilter(filters);
+  const rowValues = new Set(filteredRows.map((row) => normalizeFilterValue(row[key])));
+
+  return data.filter((item) => {
+    if (!active) return true;
+    if (rowValues.size && rowValues.has(normalizeFilterValue(item.name))) return true;
+    return fallbackMatcher ? fallbackMatcher(item, filters) : false;
+  });
+}
+
+function renderLatestSummary() {
+  const tbody = document.getElementById("latestSummary");
+
+  if (!tbody) return;
+
+  tbody.innerHTML = "";
+
+  const grouped = groupRowsByTime();
+
   const times = Object.keys(grouped).sort().reverse();
+
+  if (!times.length) {
+    renderEmptyState(tbody, "No traffic for selected filter");
+    renderPagination(1);
+    return;
+  }
 
   const totalPages = Math.max(1, Math.ceil(times.length / rowsPerPage));
 
@@ -522,12 +634,7 @@ function renderPagination(totalPages) {
 }
 
 function changePage(direction) {
-  const grouped = {};
-
-  rows.forEach((r) => {
-    if (!grouped[r.t]) grouped[r.t] = [];
-    grouped[r.t].push(r);
-  });
+  const grouped = groupRowsByTime();
 
   const totalPages = Math.max(
     1,
@@ -560,7 +667,15 @@ const opGrid = document.getElementById("operatorGrid");
 function renderOperators() {
   if (!opGrid) return;
   opGrid.innerHTML = "";
-  operators.forEach((op) => {
+  const filters = getActiveFilters();
+  const visibleOperators = operators.filter((op) => matchesFilter(op.name, filters.operator));
+
+  if (!visibleOperators.length) {
+    renderEmptyState(opGrid, "No operator for selected filter");
+    return;
+  }
+
+  visibleOperators.forEach((op) => {
     const el = document.createElement("div");
     el.className = `operator-item ${op.isLive ? "live-tick" : ""}`;
     el.innerHTML = `
@@ -648,7 +763,17 @@ function renderNoDr(data, containerId) {
   const el = document.getElementById(containerId);
   if (!el) return;
   el.innerHTML = "";
-  data.slice(0, 8).forEach((d) => {
+  const key = containerId === "gatewayNoDr" ? "gateway" : "sender";
+  const visibleData = filterByRows(data, key, (item, filters) =>
+    entityMatchesFilters(item.name, filters, { [key]: item.name }),
+  );
+
+  if (!visibleData.length) {
+    renderEmptyState(el, "No alert for selected filter");
+    return;
+  }
+
+  visibleData.slice(0, 8).forEach((d) => {
     const level = getNoDrLevel(d.val);
     const severity = getSeverityLabel(level);
     const div = document.createElement("div");
@@ -679,7 +804,7 @@ function enhanceStaticAlerts() {
     const title = section.querySelector(".alert-section-title")?.textContent || "";
     let level = "";
     if (title.includes("Sender Stop")) level = "high";
-    if (title.includes("Account Stop")) level = "medium";
+    if (title.includes("Account Stop")) level = "high";
     if (!level) return;
 
     section.querySelectorAll(".alert-item").forEach((item) => {
@@ -733,7 +858,17 @@ function renderStopAlerts(title, pool, level, size = 7) {
   const panel = section?.querySelector(".scroll-panel");
   if (!panel) return;
 
-  const shuffled = [...pool].sort(() => Math.random() - 0.5).slice(0, size);
+  section.classList.add("stop-alert-section", "stop-critical");
+
+  const filters = getActiveFilters();
+  const filteredPool = pool.filter((name) => entityMatchesFilters(name, filters));
+  const shuffled = [...filteredPool].sort(() => Math.random() - 0.5).slice(0, size);
+
+  if (!shuffled.length) {
+    renderEmptyState(panel, "No stop alert for selected filter");
+    return;
+  }
+
   panel.innerHTML = shuffled
     .map(
       (name) => `
@@ -750,7 +885,7 @@ function renderStopAlerts(title, pool, level, size = 7) {
 
 function updateStopAlerts() {
   renderStopAlerts("Sender Stop", senderStopPool, "high", 7);
-  renderStopAlerts("Account Stop", accountStopPool, "medium", 6);
+  renderStopAlerts("Account Stop", accountStopPool, "high", 6);
   updateAlertSummary();
 }
 
@@ -800,7 +935,18 @@ function renderPerf(data, containerId) {
   const el = document.getElementById(containerId);
   if (!el) return;
   el.innerHTML = "";
-  data.forEach((d) => {
+  const key = containerId === "supplierPerf" ? "sup" : "acc";
+  const filterKey = containerId === "supplierPerf" ? "supplier" : "account";
+  const visibleData = filterByRows(data, key, (item, filters) =>
+    entityMatchesFilters(item.name, filters, { [filterKey]: item.name }),
+  );
+
+  if (!visibleData.length) {
+    renderEmptyState(el, "No performance for selected filter");
+    return;
+  }
+
+  visibleData.forEach((d) => {
     const div = document.createElement("div");
     div.className = `perf-item ${d.isLive ? "live-tick" : ""}`;
     div.innerHTML = `
@@ -858,6 +1004,10 @@ const senderStats = [...document.querySelectorAll(".sender-item")].map((item) =>
 function renderSenderStats() {
   const list = document.querySelector(".sender-list");
   if (!list) return;
+  const filters = getActiveFilters();
+  const visibleStats = senderStats.filter((sender) =>
+    entityMatchesFilters(sender.name, filters),
+  );
 
   list.innerHTML = `
     <div class="sender-table-head">
@@ -866,7 +1016,9 @@ function renderSenderStats() {
       <span>Yesterday</span>
       <span>Delta</span>
     </div>
-    ${senderStats
+    ${
+      visibleStats.length
+        ? visibleStats
       .map((sender) => {
         const delta = sender.yesterday
           ? ((sender.today - sender.yesterday) / sender.yesterday) * 100
@@ -882,7 +1034,9 @@ function renderSenderStats() {
           </div>
         `;
       })
-      .join("")}
+      .join("")
+        : '<div class="empty-state sender-empty">No sender for selected filter</div>'
+    }
   `;
 }
 
@@ -905,54 +1059,30 @@ function updateSenderStatsTraffic() {
 renderSenderStats();
 
 // ── 🔥 LOGIKA FILTER GLOBAL ──
-function checkMatch(textSender, textAcc, textSup) {
-  const fSender =
-    document.getElementById("filterSender")?.value.toLowerCase() || "all";
-  const fAccount =
-    document.getElementById("filterAccount")?.value.toLowerCase() || "all";
-  const fSupplier =
-    document.getElementById("filterSupplier")?.value.toLowerCase() || "all";
-
-  let match = true;
-  if (fSender !== "all" && !textSender.toLowerCase().includes(fSender))
-    match = false;
-  if (fAccount !== "all" && !textAcc.toLowerCase().includes(fAccount))
-    match = false;
-  if (fSupplier !== "all" && !textSup.toLowerCase().includes(fSupplier))
-    match = false;
-
-  return match;
-}
-
 function applyFilter() {
-  const items = document.querySelectorAll(
-    ".sender-item, .alert-item, .perf-item",
-  );
-  items.forEach((item) => {
-    const text = item.innerText || "";
-    item.style.display = checkMatch(text, text, text) ? "flex" : "none";
-  });
-
-  const tableRows = document.querySelectorAll("#latestTable tr");
-  tableRows.forEach((row) => {
-    const sName = row.querySelector(".sender-col")?.innerText || "";
-    const aName = row.querySelector(".acc-col")?.innerText || "";
-    const pName = row.querySelector(".sup-col")?.innerText || "";
-    row.style.display = checkMatch(sName, aName, pName) ? "" : "none";
-  });
+  currentPage = 1;
+  renderLatestSummary();
+  renderSenderStats();
+  renderOperators();
+  renderNoDr(senderNoDrData, "senderNoDr");
+  renderNoDr(gatewayNoDrData, "gatewayNoDr");
+  updateStopAlerts();
+  renderPerf(clients, "clientPerf");
+  renderPerf(suppliers, "supplierPerf");
 
   if (trafficChart) {
+    const active = hasActiveFilter();
     trafficChart.data.datasets.forEach((dataset) => {
-      dataset.data = dataset.data.map(() => Math.floor(Math.random() * 80) + 5);
+      dataset.data = dataset.data.map((value, index) => {
+        if (!active) return value;
+        const wave = (index % 5) * 3;
+        if (dataset.label === "SMS Count") return Math.max(1, Math.round(value * 0.55 + wave));
+        if (dataset.label === "% Delivered") return clamp(value + randomInt(-6, 6), 35, 98);
+        return clamp(value + randomInt(-5, 7), 0, 100);
+      });
     });
-    trafficChart.update();
+    trafficChart.update("none");
   }
-
-  document.querySelectorAll(".operator-total").forEach((el) => {
-    el.innerHTML =
-      Math.floor(Math.random() * 3000 + 500).toLocaleString() +
-      "<span> sms</span>";
-  });
 }
 
 function clearFilter() {
@@ -968,7 +1098,7 @@ function clearFilter() {
 function setDefaultFilterDate() {
   const dateInput = document.getElementById("filterDate");
   if (!dateInput) return;
-  dateInput.value = new Date().toISOString().slice(0, 10);
+  dateInput.value = formatInputDate();
 }
 
 setDefaultFilterDate();
@@ -989,6 +1119,14 @@ const suppliersRT = [
   "OMNI_WAGEN",
 ];
 const accountsRT = ["GOT_OTP", "YULORE_HTTP", "SF_A2P_2", "OMNI_WAGEN"];
+
+function pickLiveValue(pool, filterValue) {
+  if (filterValue !== "all") {
+    const matched = pool.find((item) => matchesFilter(item, filterValue));
+    if (matched) return matched;
+  }
+  return pool[Math.floor(Math.random() * pool.length)];
+}
 
 function addLiveData() {
   const now = new Date();
@@ -1019,16 +1157,22 @@ function addLiveData() {
     trafficChart.update("none");
   }
 
-  const sender = sendersRT[Math.floor(Math.random() * sendersRT.length)];
-  const sup = suppliersRT[Math.floor(Math.random() * suppliersRT.length)];
-  const acc = accountsRT[Math.floor(Math.random() * accountsRT.length)];
+  const filters = getActiveFilters();
+  const sender = pickLiveValue(sendersRT, filters.sender);
+  const sup = pickLiveValue(suppliersRT, filters.supplier);
+  const acc = pickLiveValue(accountsRT, filters.account);
+  const operator = pickLiveValue(fakeOperatorsRT, filters.operator);
+  const gateway = pickLiveValue(fakeGatewaysRT, filters.gateway);
   const rec = Math.floor(Math.random() * 10) + 1;
 
   rows.unshift({
     t: timeStr,
+    date: formatInputDate(now),
     sender,
     sup,
     acc,
+    operator,
+    gateway,
     rec,
     nodr,
   });
