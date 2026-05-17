@@ -115,7 +115,7 @@ for (let i = 35; i >= 0; i--) {
   labels.push(
     `${String(t.getHours()).padStart(2, "0")}:${String(t.getMinutes()).padStart(2, "0")}`,
   );
-  smsData.push(Math.floor(Math.random() * 35) + 5);
+  smsData.push(randomInt(1500, 6000));
   delivData.push(Math.floor(Math.random() * 20) + 70);
   nodrData.push(Math.floor(Math.random() * 18) + 1);
 }
@@ -197,9 +197,12 @@ function buildChart() {
         },
         y: {
           position: "left",
+          min: 0,
+          max: 6000,
           ticks: {
             color: tickColor,
             font: { family: "JetBrains Mono", size: 11, weight: "900" },
+            stepSize: 1500,
           },
           grid: { color: gridColor },
         },
@@ -259,6 +262,21 @@ const fakeAccounts = [
 
 const fakeOperatorsRT = ["TELKOMSEL", "THREE", "SMARTFREN", "INDOSAT", "XL", "AXIS"];
 
+const accountSenderPairs = [
+  ["YULORE_HTTP", "UangMe"],
+  ["SF_A2P_2", "UangMe"],
+  ["YULORE_HTTP", "SINGA.ID"],
+  ["SF_A2P_2", "SINGA.ID"],
+  ["TIG_DOM-B", "SULSELBAR"],
+  ["GOT_OTP", "Bukalapak"],
+  ["SF_A2P_2", "Cashcepat"],
+  ["YULORE_HTTP", "MOKA"],
+  ["SF_A2P_2", "BantuSaku"],
+  ["GOT_OTP", "Akulaku"],
+  ["OMNI_WAGEN", "BRI-NOTIF"],
+  ["YULORE_HTTP", "Indosaku"],
+];
+
 const fakeGatewaysRT = [
   "TOG_DOM_DIR",
   "HTTP_YULORE",
@@ -276,10 +294,23 @@ for (let minute = 0; minute < 30; minute++) {
     `${String(now.getHours()).padStart(2, "0")}:` +
     `${String(now.getMinutes()).padStart(2, "0")}`;
 
-  const totalTransactions = Math.floor(Math.random() * 5) + 2;
+  const minuteRecords = randomInt(1500, 6000);
+  const totalTransactions = Math.floor(Math.random() * 5) + 4;
+  let remainingRecords = minuteRecords;
 
   for (let i = 0; i < totalTransactions; i++) {
-    const rec = Math.floor(Math.random() * 10) + 3;
+    const remainingRows = totalTransactions - i;
+    const pair = accountSenderPairs[Math.floor(Math.random() * accountSenderPairs.length)];
+    const rec = Math.min(
+      remainingRecords - (remainingRows - 1),
+      i === totalTransactions - 1
+        ? remainingRecords
+        : randomInt(
+            Math.max(1, Math.floor(remainingRecords / remainingRows / 2)),
+            Math.max(1, Math.floor(remainingRecords / remainingRows * 1.5)),
+          ),
+    );
+    remainingRecords -= rec;
     const breakdown = createTrafficBreakdown(rec);
 
     rows.push({
@@ -287,11 +318,11 @@ for (let minute = 0; minute < 30; minute++) {
 
       date: formatInputDate(now),
 
-      sender: fakeSenders[Math.floor(Math.random() * fakeSenders.length)],
+      sender: pair[1],
 
       sup: fakeSuppliers[Math.floor(Math.random() * fakeSuppliers.length)],
 
-      acc: fakeAccounts[Math.floor(Math.random() * fakeAccounts.length)],
+      acc: pair[0],
 
       operator: fakeOperatorsRT[Math.floor(Math.random() * fakeOperatorsRT.length)],
 
@@ -547,6 +578,51 @@ function filterByRows(data, key, fallbackMatcher) {
   });
 }
 
+function getRecentTrafficRows() {
+  const today = formatInputDate();
+  return rows.filter((row) => row.date === today).slice(0, 180);
+}
+
+function aggregateTrafficRows(sourceRows, keyFn) {
+  const metrics = new Map();
+
+  sourceRows.forEach((row) => {
+    normalizeTrafficRow(row);
+    const key = keyFn(row);
+    if (!key) return;
+
+    if (!metrics.has(key)) {
+      metrics.set(key, {
+        name: key,
+        records: 0,
+        sent: 0,
+        delivered: 0,
+        undeliv: 0,
+      });
+    }
+
+    const metric = metrics.get(key);
+    metric.records += row.rec;
+    metric.sent += row.sent;
+    metric.delivered += row.delivered;
+    metric.undeliv += row.undeliv;
+  });
+
+  return metrics;
+}
+
+function toPercent(part, total) {
+  return total ? Math.round((part / total) * 100) : 0;
+}
+
+function assignTrafficPercentages(target, metric) {
+  const total = Math.max(1, metric?.records || 0);
+  target.total = metric?.records || 0;
+  target.sent = toPercent(metric?.sent || 0, total);
+  target.delivered = toPercent(metric?.delivered || 0, total);
+  target.undeliv = Math.max(0, 100 - target.delivered - target.sent);
+}
+
 function renderLatestSummary() {
   const tbody = document.getElementById("latestSummary");
 
@@ -753,13 +829,7 @@ function renderOperators() {
 renderOperators();
 
 function updateOperatorTraffic() {
-  operators.forEach((op) => {
-    op.total = Math.max(500, op.total + randomInt(-320, 520));
-    op.delivered = clamp(op.delivered + randomInt(-4, 5), 45, 92);
-    op.sent = clamp(op.sent + randomInt(-3, 3), 4, 35);
-    op.undeliv = Math.max(0, 100 - op.delivered - op.sent);
-    op.isLive = true;
-  });
+  syncDashboardMetrics();
   renderOperators();
   window.setTimeout(() => {
     operators.forEach((op) => {
@@ -840,13 +910,7 @@ renderNoDr(senderNoDrData, "senderNoDr");
 renderNoDr(gatewayNoDrData, "gatewayNoDr");
 
 function updateNoDrTraffic() {
-  [senderNoDrData, gatewayNoDrData].forEach((data) => {
-    data.forEach((d) => {
-      d.val = clamp(d.val + randomInt(-18, 22), 0, 100);
-    });
-    data.sort((a, b) => b.val - a.val);
-  });
-
+  syncDashboardMetrics();
   renderNoDr(senderNoDrData, "senderNoDr");
   renderNoDr(gatewayNoDrData, "gatewayNoDr");
   updateAlertSummary();
@@ -1023,14 +1087,7 @@ function rebalancePerformance(item) {
 }
 
 function updatePerformanceTraffic() {
-  clients.forEach((item) => {
-    rebalancePerformance(item);
-    item.isLive = true;
-  });
-  suppliers.forEach((item) => {
-    rebalancePerformance(item);
-    item.isLive = true;
-  });
+  syncDashboardMetrics();
   renderPerf(clients, "clientPerf");
   renderPerf(suppliers, "supplierPerf");
   window.setTimeout(() => {
@@ -1054,13 +1111,106 @@ const senderStats = [...document.querySelectorAll(".sender-item")].map((item) =>
   };
 });
 
+function upsertNamedMetric(list, name, defaults = {}) {
+  let item = list.find((entry) => normalizeFilterValue(entry.name) === normalizeFilterValue(name));
+  if (!item) {
+    item = { name, ...defaults };
+    list.push(item);
+  }
+  return item;
+}
+
+function syncPerformanceList(list, metrics) {
+  metrics.forEach((metric, name) => {
+    const item = upsertNamedMetric(list, name, { g: 0, y: 0, r: 0 });
+    const total = Math.max(1, metric.records);
+    item.g = toPercent(metric.delivered, total);
+    item.y = toPercent(metric.sent, total);
+    item.r = Math.max(0, 100 - item.g - item.y);
+    item.isLive = true;
+  });
+
+  list.sort((a, b) => (b.g || 0) - (a.g || 0));
+}
+
+function syncNoDrList(list, metrics) {
+  list.length = 0;
+  metrics.forEach((metric, name) => {
+    list.push({
+      name,
+      val: toPercent(metric.undeliv, Math.max(1, metric.records)),
+    });
+  });
+  list.sort((a, b) => b.val - a.val);
+}
+
+function syncStopPools(accountMetrics, senderMetrics) {
+  const accountStops = [...accountMetrics.values()]
+    .sort((a, b) => b.undeliv / Math.max(1, b.records) - a.undeliv / Math.max(1, a.records))
+    .slice(0, 10)
+    .map((metric) => metric.name);
+  const senderStops = [...senderMetrics.values()]
+    .sort((a, b) => b.undeliv / Math.max(1, b.records) - a.undeliv / Math.max(1, a.records))
+    .slice(0, 10)
+    .map((metric) => metric.name);
+
+  if (accountStops.length) accountStopPool.splice(0, accountStopPool.length, ...accountStops);
+  if (senderStops.length) senderStopPool.splice(0, senderStopPool.length, ...senderStops);
+}
+
+function syncDashboardMetrics() {
+  const sourceRows = getRecentTrafficRows();
+  const operatorMetrics = aggregateTrafficRows(sourceRows, (row) => row.operator);
+  const senderMetrics = aggregateTrafficRows(sourceRows, (row) => row.sender);
+  const gatewayMetrics = aggregateTrafficRows(sourceRows, (row) => row.gateway);
+  const accountMetrics = aggregateTrafficRows(sourceRows, (row) => row.acc);
+  const supplierMetrics = aggregateTrafficRows(sourceRows, (row) => row.sup);
+  const senderStatMetrics = aggregateTrafficRows(
+    sourceRows,
+    (row) => `${row.acc}-${row.sender}`,
+  );
+
+  operators.forEach((op) => {
+    const metric = operatorMetrics.get(op.name);
+    const previousTotal = op.total;
+    assignTrafficPercentages(op, metric || { records: 0, sent: 0, delivered: 0, undeliv: 0 });
+    op.isLive = op.total !== previousTotal;
+  });
+
+  const previousSenderStats = new Map(
+    senderStats.map((sender) => [normalizeFilterValue(sender.name), sender]),
+  );
+  senderStats.length = 0;
+  senderStatMetrics.forEach((metric, name) => {
+    const previous = previousSenderStats.get(normalizeFilterValue(name));
+    senderStats.push({
+      name,
+      yesterday:
+        previous?.yesterday ||
+        Math.max(1, Math.round(metric.records * (0.72 + Math.random() * 0.24))),
+      today: metric.records,
+      isLive: !previous || previous.today !== metric.records,
+    });
+  });
+  senderStats.sort((a, b) => b.today - a.today);
+
+  syncPerformanceList(clients, accountMetrics);
+  syncPerformanceList(suppliers, supplierMetrics);
+  syncNoDrList(senderNoDrData, senderMetrics);
+  syncNoDrList(gatewayNoDrData, gatewayMetrics);
+  syncStopPools(accountMetrics, senderStatMetrics);
+}
+
 function renderSenderStats() {
   const list = document.querySelector(".sender-list");
   if (!list) return;
   const filters = getActiveFilters();
-  const visibleStats = senderStats.filter((sender) =>
-    entityMatchesFilters(sender.name, filters),
-  );
+  const activeRows = getFilteredRows();
+  const activeNames = new Set(activeRows.map((row) => normalizeFilterValue(`${row.acc}-${row.sender}`)));
+  const visibleStats = senderStats.filter((sender) => {
+    if (hasActiveFilter(filters)) return activeNames.has(normalizeFilterValue(sender.name));
+    return entityMatchesFilters(sender.name, filters);
+  });
 
   list.innerHTML = `
     <div class="sender-table-head">
@@ -1094,13 +1244,7 @@ function renderSenderStats() {
 }
 
 function updateSenderStatsTraffic() {
-  senderStats.forEach((sender) => {
-    sender.yesterday = sender.today;
-    sender.today = Math.max(0, sender.today + randomInt(-420, 520));
-    sender.isLive = true;
-  });
-
-  senderStats.sort((a, b) => b.today - a.today);
+  syncDashboardMetrics();
   renderSenderStats();
   window.setTimeout(() => {
     senderStats.forEach((sender) => {
@@ -1109,11 +1253,19 @@ function updateSenderStatsTraffic() {
     renderSenderStats();
   }, 900);
 }
+syncDashboardMetrics();
+renderOperators();
+renderNoDr(senderNoDrData, "senderNoDr");
+renderNoDr(gatewayNoDrData, "gatewayNoDr");
+updateStopAlerts();
+renderPerf(clients, "clientPerf");
+renderPerf(suppliers, "supplierPerf");
 renderSenderStats();
 
 // ── 🔥 LOGIKA FILTER GLOBAL ──
 function applyFilter() {
   currentPage = 1;
+  syncDashboardMetrics();
   renderLatestSummary();
   renderSenderStats();
   renderOperators();
@@ -1171,7 +1323,7 @@ const suppliersRT = [
   "HTTP_YULORE",
   "OMNI_WAGEN",
 ];
-const accountsRT = ["GOT_OTP", "YULORE_HTTP", "SF_A2P_2", "OMNI_WAGEN"];
+const accountsRT = ["GOT_OTP", "YULORE_HTTP", "SF_A2P_2", "OMNI_WAGEN", "TIG_DOM-B"];
 
 function pickLiveValue(pool, filterValue) {
   if (filterValue !== "all") {
@@ -1181,11 +1333,27 @@ function pickLiveValue(pool, filterValue) {
   return pool[Math.floor(Math.random() * pool.length)];
 }
 
+function pickLiveAccountSender(filters) {
+  const candidates = accountSenderPairs.filter(
+    ([account, sender]) =>
+      matchesFilter(account, filters.account) && matchesFilter(sender, filters.sender),
+  );
+
+  if (candidates.length) {
+    return candidates[Math.floor(Math.random() * candidates.length)];
+  }
+
+  return [
+    pickLiveValue(accountsRT, filters.account),
+    pickLiveValue(sendersRT, filters.sender),
+  ];
+}
+
 function addLiveData() {
   const now = new Date();
   const timeStr = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
 
-  const sms = Math.floor(Math.random() * 35) + 5;
+  const sms = randomInt(1500, 6000);
   const chartBreakdown = createTrafficBreakdown(sms);
   const nodr = chartBreakdown.nodr;
   const deliv = sms ? Math.round((chartBreakdown.delivered / sms) * 100) : 0;
@@ -1212,13 +1380,12 @@ function addLiveData() {
   }
 
   const filters = getActiveFilters();
-  const sender = pickLiveValue(sendersRT, filters.sender);
+  const [acc, sender] = pickLiveAccountSender(filters);
   const sup = pickLiveValue(suppliersRT, filters.supplier);
-  const acc = pickLiveValue(accountsRT, filters.account);
   const operator = pickLiveValue(fakeOperatorsRT, filters.operator);
   const gateway = pickLiveValue(fakeGatewaysRT, filters.gateway);
-  const rec = Math.floor(Math.random() * 12) + 3;
-  const breakdown = createTrafficBreakdown(rec);
+  const rec = sms;
+  const breakdown = chartBreakdown;
 
   rows.unshift({
     t: timeStr,
@@ -1239,8 +1406,16 @@ function addLiveData() {
 
   highlightedTime = timeStr;
   currentPage = 1;
+  syncDashboardMetrics();
   updateLastUpdated(now);
   renderLatestSummary();
+  renderSenderStats();
+  renderOperators();
+  renderNoDr(senderNoDrData, "senderNoDr");
+  renderNoDr(gatewayNoDrData, "gatewayNoDr");
+  updateStopAlerts();
+  renderPerf(clients, "clientPerf");
+  renderPerf(suppliers, "supplierPerf");
 
   window.setTimeout(() => {
     if (highlightedTime === timeStr) {
@@ -1252,12 +1427,14 @@ function addLiveData() {
 }
 
 function simulateDashboardTraffic() {
-  updateSenderStatsTraffic();
-  updateOperatorTraffic();
-  updateNoDrTraffic();
-  updatePerformanceTraffic();
-
-  if (Math.random() > 0.35) updateStopAlerts();
+  syncDashboardMetrics();
+  renderSenderStats();
+  renderOperators();
+  renderNoDr(senderNoDrData, "senderNoDr");
+  renderNoDr(gatewayNoDrData, "gatewayNoDr");
+  updateStopAlerts();
+  renderPerf(clients, "clientPerf");
+  renderPerf(suppliers, "supplierPerf");
   updateLastUpdated();
 }
 
