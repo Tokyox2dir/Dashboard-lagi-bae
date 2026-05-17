@@ -50,6 +50,44 @@ function formatPercent(value) {
   return Number(value).toFixed(2).replace(/\.00$/, "");
 }
 
+function formatCountPercent(count, total) {
+  const percent = total ? Math.round((count / total) * 100) : 0;
+  return `${count} (${percent}%)`;
+}
+
+function createTrafficBreakdown(records) {
+  const healthy = Math.random() > 0.18;
+  const deliveredRate = healthy ? randomInt(72, 94) : randomInt(38, 68);
+  const sentRate = healthy ? randomInt(3, 14) : randomInt(8, 22);
+  let delivered = Math.round((records * deliveredRate) / 100);
+  let sent = Math.round((records * sentRate) / 100);
+
+  delivered = clamp(delivered, 1, records);
+  sent = clamp(sent, 0, Math.max(0, records - delivered));
+
+  const undeliv = Math.max(0, records - delivered - sent);
+  const nodr = records ? Math.round((undeliv / records) * 100) : 0;
+
+  return { sent, delivered, undeliv, nodr };
+}
+
+function normalizeTrafficRow(row) {
+  if (
+    Number.isFinite(row.sent) &&
+    Number.isFinite(row.delivered) &&
+    Number.isFinite(row.undeliv)
+  ) {
+    return row;
+  }
+
+  const fallback = createTrafficBreakdown(row.rec || 1);
+  row.sent = fallback.sent;
+  row.delivered = fallback.delivered;
+  row.undeliv = fallback.undeliv;
+  row.nodr = fallback.nodr;
+  return row;
+}
+
 function formatEntityName(name) {
   return String(name).replace(
     /^([A-Za-z0-9_]+(?:-[A-Z])?)-(.+)$/,
@@ -161,7 +199,7 @@ function buildChart() {
           position: "left",
           ticks: {
             color: tickColor,
-            font: { family: "JetBrains Mono", size: 8 },
+            font: { family: "JetBrains Mono", size: 11, weight: "900" },
           },
           grid: { color: gridColor },
         },
@@ -171,7 +209,7 @@ function buildChart() {
           max: 100,
           ticks: {
             color: tickColor,
-            font: { family: "JetBrains Mono", size: 8 },
+            font: { family: "JetBrains Mono", size: 11, weight: "900" },
           },
           grid: { drawOnChartArea: false },
         },
@@ -241,6 +279,9 @@ for (let minute = 0; minute < 30; minute++) {
   const totalTransactions = Math.floor(Math.random() * 5) + 2;
 
   for (let i = 0; i < totalTransactions; i++) {
+    const rec = Math.floor(Math.random() * 10) + 3;
+    const breakdown = createTrafficBreakdown(rec);
+
     rows.push({
       t: timeStr,
 
@@ -256,9 +297,15 @@ for (let minute = 0; minute < 30; minute++) {
 
       gateway: fakeGatewaysRT[Math.floor(Math.random() * fakeGatewaysRT.length)],
 
-      rec: Math.floor(Math.random() * 10) + 1,
+      rec,
 
-      nodr: Math.floor(Math.random() * 100),
+      sent: breakdown.sent,
+
+      delivered: breakdown.delivered,
+
+      undeliv: breakdown.undeliv,
+
+      nodr: breakdown.nodr,
     });
   }
 }
@@ -341,7 +388,11 @@ function toggleDetail(index) {
 
             <th>Records</th>
 
-            <th>No DR</th>
+            <th>Sent</th>
+
+            <th>Delivered</th>
+
+            <th>Undelivered</th>
 
           </tr>
 
@@ -351,7 +402,10 @@ function toggleDetail(index) {
 
           ${detailRows
             .map(
-              (d) => `
+              (detail) => {
+                const d = normalizeTrafficRow(detail);
+
+                return `
 
             <tr>
 
@@ -367,15 +421,16 @@ function toggleDetail(index) {
 
               <td>${d.rec}</td>
 
-              <td class="td-nodr ${d.nodr > 15 ? "high" : "ok"}">
+              <td class="td-sent">${formatCountPercent(d.sent, d.rec)}</td>
 
-                ${d.nodr}%
+              <td class="td-delivered">${formatCountPercent(d.delivered, d.rec)}</td>
 
-              </td>
+              <td class="td-undeliv">${formatCountPercent(d.undeliv, d.rec)}</td>
 
             </tr>
 
-          `,
+          `;
+              },
             )
             .join("")}
 
@@ -461,7 +516,7 @@ function groupRowsByTime(sourceRows = getFilteredRows()) {
 function renderEmptyState(el, message) {
   if (!el) return;
   if (el.tagName === "TBODY") {
-    el.innerHTML = `<tr><td class="empty-state" colspan="6">${message}</td></tr>`;
+    el.innerHTML = `<tr><td class="empty-state" colspan="7">${message}</td></tr>`;
     return;
   }
   el.innerHTML = `<div class="empty-state">${message}</div>`;
@@ -524,17 +579,23 @@ function renderLatestSummary() {
 
     let totalRecords = 0;
 
-    let totalNoDr = 0;
+    let totalSent = 0;
+
+    let totalDelivered = 0;
+
+    let totalUndeliv = 0;
 
     detailRows.forEach((d) => {
+      normalizeTrafficRow(d);
+
       totalRecords += d.rec;
 
-      totalNoDr += d.nodr;
+      totalSent += d.sent;
+
+      totalDelivered += d.delivered;
+
+      totalUndeliv += d.undeliv;
     });
-
-    const avgNoDr = Math.round(totalNoDr / detailRows.length);
-
-    const delivered = 100 - avgNoDr;
 
     const tr = document.createElement("tr");
     if (time === highlightedTime && currentPage === 1) {
@@ -551,23 +612,15 @@ function renderLatestSummary() {
 
       <td>${totalRecords}</td>
 
-      <td>${detailRows.length}</td>
+      <td class="td-sent">${formatCountPercent(totalSent, totalRecords)}</td>
 
-      <td class="td-nodr ${getNoDrLevel(avgNoDr)}">
+      <td class="td-delivered">${formatCountPercent(totalDelivered, totalRecords)}</td>
 
-        ${avgNoDr}%
-
-      </td>
+      <td class="td-undeliv">${formatCountPercent(totalUndeliv, totalRecords)}</td>
 
       <td>
 
         <div class="delivered-wrap">
-
-          <span class="td-nodr ok">
-
-            ${delivered}%
-
-          </span>
 
           <button
             class="btn-detail"
@@ -1133,8 +1186,9 @@ function addLiveData() {
   const timeStr = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
 
   const sms = Math.floor(Math.random() * 35) + 5;
-  const nodr = Math.floor(Math.random() * 100);
-  const deliv = 100 - nodr;
+  const chartBreakdown = createTrafficBreakdown(sms);
+  const nodr = chartBreakdown.nodr;
+  const deliv = sms ? Math.round((chartBreakdown.delivered / sms) * 100) : 0;
 
   if (trafficChart) {
     const lastIndex = trafficChart.data.labels.length - 1;
@@ -1163,7 +1217,8 @@ function addLiveData() {
   const acc = pickLiveValue(accountsRT, filters.account);
   const operator = pickLiveValue(fakeOperatorsRT, filters.operator);
   const gateway = pickLiveValue(fakeGatewaysRT, filters.gateway);
-  const rec = Math.floor(Math.random() * 10) + 1;
+  const rec = Math.floor(Math.random() * 12) + 3;
+  const breakdown = createTrafficBreakdown(rec);
 
   rows.unshift({
     t: timeStr,
@@ -1174,7 +1229,10 @@ function addLiveData() {
     operator,
     gateway,
     rec,
-    nodr,
+    sent: breakdown.sent,
+    delivered: breakdown.delivered,
+    undeliv: breakdown.undeliv,
+    nodr: breakdown.nodr,
   });
 
   if (rows.length > 180) rows.length = 180;
