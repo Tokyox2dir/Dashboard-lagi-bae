@@ -95,6 +95,10 @@ function formatEntityName(name) {
   );
 }
 
+function normalizeOperatorName(name) {
+  return normalizeFilterValue(name) === "axis" ? "XL" : name;
+}
+
 // ── CLOCK ──────────────────────────────────────────
 function updateClock() {
   document.getElementById("clock").textContent = formatClockTime();
@@ -260,7 +264,7 @@ const fakeAccounts = [
   "INFOBIP",
 ];
 
-const fakeOperatorsRT = ["TELKOMSEL", "THREE", "SMARTFREN", "INDOSAT", "XL", "AXIS"];
+const fakeOperatorsRT = ["TELKOMSEL", "THREE", "SMARTFREN", "INDOSAT", "XL"];
 
 const accountSenderPairs = [
   ["YULORE_HTTP", "UangMe"],
@@ -517,7 +521,7 @@ function matchesFilter(value, filterValue) {
 function rowMatchesFilters(row, filters = getActiveFilters()) {
   return (
     (!filters.date || row.date === filters.date) &&
-    matchesFilter(row.operator, filters.operator) &&
+    matchesFilter(normalizeOperatorName(row.operator), filters.operator) &&
     matchesFilter(row.acc, filters.account) &&
     matchesFilter(row.sender, filters.sender) &&
     matchesFilter(row.sup, filters.supplier) &&
@@ -790,7 +794,6 @@ const operators = [
   { name: "SMARTFREN", total: 4120, delivered: 82, sent: 10, undeliv: 8 },
   { name: "INDOSAT", total: 9210, delivered: 69, sent: 20, undeliv: 11 },
   { name: "XL", total: 6780, delivered: 74, sent: 15, undeliv: 11 },
-  { name: "AXIS", total: 3200, delivered: 65, sent: 22, undeliv: 13 },
 ];
 const opGrid = document.getElementById("operatorGrid");
 function renderOperators() {
@@ -1160,7 +1163,7 @@ function syncStopPools(accountMetrics, senderMetrics) {
 
 function syncDashboardMetrics() {
   const sourceRows = getRecentTrafficRows();
-  const operatorMetrics = aggregateTrafficRows(sourceRows, (row) => row.operator);
+  const operatorMetrics = aggregateTrafficRows(sourceRows, (row) => normalizeOperatorName(row.operator));
   const senderMetrics = aggregateTrafficRows(sourceRows, (row) => row.sender);
   const gatewayMetrics = aggregateTrafficRows(sourceRows, (row) => row.gateway);
   const accountMetrics = aggregateTrafficRows(sourceRows, (row) => row.acc);

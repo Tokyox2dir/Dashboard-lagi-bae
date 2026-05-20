@@ -203,7 +203,7 @@ tr.row-new { animation: row-flash 6s ease forwards; }
 .operator-grid {
   display: grid;
   grid-template-columns: 1fr;
-  grid-template-rows: repeat(6, minmax(0, 1fr));
+  grid-template-rows: repeat(5, minmax(0, 1fr));
   gap: 6px;
   padding: 10px;
   flex: 1;
@@ -228,8 +228,8 @@ tr.row-new { animation: row-flash 6s ease forwards; }
   gap: 10px;
 }
 .operator-name {
-  font-size: 12px;
-  font-weight: 800;
+  font-size: 14px;
+  font-weight: 900;
   color: var(--text);
   letter-spacing: 0.2px;
   overflow: hidden;
