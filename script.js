@@ -9,6 +9,16 @@ function toggleDark(el) {
 }
 
 let highlightedTime = null;
+let selectedLogContext = null;
+
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
 
 function initAppNavigation() {
   const navItems = document.querySelectorAll("[data-page]");
@@ -42,9 +52,26 @@ function initAppNavigation() {
       const response = await fetch(`pages/${page}.html`, { cache: "no-store" });
       if (!response.ok) throw new Error(`Page ${page} not found`);
       pageSlot.innerHTML = await response.text();
+      initLoadedPage(page, title);
     } catch (error) {
       renderFallbackPage(title);
     }
+  };
+
+  window.navigateToPage = async (page, title) => {
+    navItems.forEach((nav) => nav.classList.remove("active"));
+    const target = document.querySelector(`[data-page="${page}"]`);
+    target?.classList.add("active");
+    target?.closest(".nav-group")?.classList.add("open");
+
+    if (page === "monitoring") {
+      monitoringPage?.classList.add("active");
+      placeholderPage?.classList.remove("active");
+      if (pageTitle) pageTitle.textContent = "Monitoring Overview";
+      return;
+    }
+
+    await loadMenuPage(page, title);
   };
 
   navToggles.forEach((toggle) => {
@@ -79,7 +106,6 @@ function initAppNavigation() {
         return;
       }
 
-      monitoringPage?.classList.remove("active");
       await loadMenuPage(item.dataset.page, label);
     });
   });
@@ -452,6 +478,29 @@ function buildAccountLogUrl(account, detail) {
   return `#log?${params.toString()}`;
 }
 
+function openLogsFromDetail(index) {
+  const detail = window.currentDetailRows?.[index];
+  if (!detail) return;
+
+  selectedLogContext = {
+    account: detail.acc,
+    supplier: detail.sup,
+    sender: detail.sender,
+    time: detail.t,
+    records: detail.rec,
+    sent: detail.sent,
+    delivered: detail.delivered,
+    undeliv: detail.undeliv,
+    operator: detail.operator,
+    gateway: detail.gateway,
+  };
+
+  closeDetailModal();
+  window.navigateToPage?.("logs", "Logs");
+}
+
+window.openLogsFromDetail = openLogsFromDetail;
+
 function toggleDetail(index) {
   const oldModal = document.getElementById("detailModal");
 
@@ -464,6 +513,7 @@ function toggleDetail(index) {
   const detailRows = grouped[times[index]];
 
   if (!detailRows) return;
+  window.currentDetailRows = detailRows.map((detail) => normalizeTrafficRow({ ...detail }));
 
   const modal = document.createElement("div");
 
@@ -525,24 +575,27 @@ function toggleDetail(index) {
 
         <tbody>
 
-          ${detailRows
+          ${window.currentDetailRows
             .map(
-              (detail) => {
-                const d = normalizeTrafficRow(detail);
+              (d, rowIndex) => {
 
                 return `
 
             <tr>
 
               <td>
-                <a class="account-log-link" href="${buildAccountLogUrl(d.acc, d)}">
-                  ${d.acc}
-                </a>
+                <button
+                  class="account-log-link"
+                  type="button"
+                  onclick="openLogsFromDetail(${rowIndex})"
+                  title="Open matching logs">
+                  ${escapeHtml(d.acc)}
+                </button>
               </td>
 
-              <td>${d.sup}</td>
+              <td>${escapeHtml(d.sup)}</td>
 
-              <td>${d.sender}</td>
+              <td>${escapeHtml(d.sender)}</td>
 
               <td>${d.rec}</td>
 
@@ -574,6 +627,401 @@ function closeDetailModal() {
 
   if (modal) modal.remove();
 }
+
+window.toggleDetail = toggleDetail;
+window.closeDetailModal = closeDetailModal;
+
+function getLogContextRows(context) {
+  if (!context) return rows.slice(0, 12);
+
+  const matches = rows.filter(
+    (row) =>
+      matchesFilter(row.acc, context.account) &&
+      matchesFilter(row.sup, context.supplier) &&
+      matchesFilter(row.sender, context.sender),
+  );
+
+  return matches.length ? matches : [context];
+}
+
+function buildDummyLogEntries(context) {
+  const sourceRows = getLogContextRows(context);
+  const entries = [];
+
+  sourceRows.slice(0, 8).forEach((row, rowIndex) => {
+    const normalized = normalizeTrafficRow({ ...row });
+    const statuses = [
+      { label: "sent", count: normalized.sent, tone: "sent" },
+      { label: "delivered", count: normalized.delivered, tone: "delivered" },
+      { label: "undelivered", count: normalized.undeliv, tone: "undeliv" },
+    ].filter((item) => item.count > 0);
+
+    statuses.forEach((status, statusIndex) => {
+      const chunk = Math.max(1, Math.min(status.count, Math.ceil(normalized.rec / 5)));
+      entries.push({
+        id: `246${randomInt(700, 999)}-${rowIndex}${statusIndex}${randomInt(1000, 9999)}`,
+        time: `${formatInputDate()} ${normalized.t}:${String(10 + rowIndex + statusIndex).padStart(2, "0")}`,
+        sender: normalized.sender,
+        account: normalized.acc,
+        supplier: normalized.sup,
+        operator: normalized.operator || "Telkomsel",
+        gateway: normalized.gateway || "TOG_DOM_DIR",
+        destination: `628${randomInt(1000000000, 9999999999)}`,
+        message:
+          normalized.sender === "Bukalapak"
+            ? "Kode OTP Bukalapak Anda berlaku 10 menit. Jangan bagikan kode ini kepada siapa pun."
+            : `Pesan ${normalized.sender} untuk transaksi dummy monitoring dashboard.`,
+        status: status.label,
+        tone: status.tone,
+        count: chunk,
+      });
+    });
+  });
+
+  return entries.slice(0, 14);
+}
+
+function renderTransactionLogs() {
+  const context = selectedLogContext;
+  const tbody = document.getElementById("logTransactionRows");
+  const countEl = document.getElementById("logRecordCount");
+
+  if (!tbody) return;
+
+  const entries = buildDummyLogEntries(context);
+  const total = entries.reduce((sum, entry) => sum + entry.count, 0);
+  const delivered = entries
+    .filter((entry) => entry.status === "delivered")
+    .reduce((sum, entry) => sum + entry.count, 0);
+  const sent = entries
+    .filter((entry) => entry.status === "sent")
+    .reduce((sum, entry) => sum + entry.count, 0);
+  const undeliv = entries
+    .filter((entry) => entry.status === "undelivered")
+    .reduce((sum, entry) => sum + entry.count, 0);
+
+  if (countEl) {
+    countEl.textContent = `${total.toLocaleString()} records: sent ${sent}, delivered ${delivered}, undelivered ${undeliv}`;
+  }
+
+  const accountInput = document.getElementById("logFilterAccount");
+  const senderInput = document.getElementById("logFilterSender");
+  const supplierInput = document.getElementById("logFilterSupplier");
+  const telcoInput = document.getElementById("logFilterTelco");
+  const gatewayInput = document.getElementById("logFilterGateway");
+  const statusInput = document.getElementById("logFilterStatus");
+  const msgInput = document.getElementById("logFilterMsg");
+  const messageInput = document.getElementById("logFilterMessage");
+
+  if (accountInput) accountInput.value = context?.account || "";
+  if (senderInput) senderInput.value = context?.sender || "";
+  if (supplierInput) supplierInput.value = context?.supplier || "";
+  if (telcoInput) telcoInput.value = context?.operator || "";
+  if (gatewayInput) gatewayInput.value = context?.gateway || "";
+  if (statusInput) statusInput.value = context ? "delivered,sent,undelivered" : "";
+  if (msgInput) msgInput.value = context ? `${context.account}-${context.sender}-${context.time}` : "";
+  if (messageInput) {
+    messageInput.value = context
+      ? `supplier=${context.supplier}; sender=${context.sender}; time=${context.time}`
+      : "";
+  }
+
+  tbody.innerHTML = entries
+    .map(
+      (entry, index) => `
+        <tr>
+          <td>${index + 1}</td>
+          <td>${escapeHtml(entry.time)}<br><span class="log-muted">(${escapeHtml(entry.sender)})</span></td>
+          <td><a class="log-id-link" href="#log-${escapeHtml(entry.id)}">${escapeHtml(entry.id)}</a><br><span class="log-muted">${entry.count} message</span></td>
+          <td><span class="log-status ${entry.tone}">${escapeHtml(entry.status)}</span><br><span class="log-muted">${entry.status === "delivered" ? "Delivered to phone" : entry.status === "sent" ? "Sent to SMSC" : "Final failed state"}</span></td>
+          <td>${escapeHtml(entry.account)}<br><span class="log-muted">${escapeHtml(entry.supplier)}</span></td>
+          <td>${escapeHtml(entry.destination)}<br><span class="log-muted">${escapeHtml(entry.operator)} [${escapeHtml(entry.gateway)}]</span></td>
+          <td>${escapeHtml(entry.message)}</td>
+        </tr>
+      `,
+    )
+    .join("");
+}
+
+function initLoadedPage(page) {
+  if (page === "logs") {
+    renderTransactionLogs();
+  }
+  if (page === "users") {
+    showUserList();
+  }
+  if (page === "snapshot") {
+    renderSnapshotChart();
+  }
+  if (page === "custom-report") {
+    renderCustomReportCharts();
+  }
+}
+
+window.initLoadedPage = initLoadedPage;
+window.renderTransactionLogs = renderTransactionLogs;
+
+function openUserDetail(username) {
+  const list = document.getElementById("usersListView");
+  const detail = document.getElementById("userDetailView");
+  const usernameInput = document.getElementById("detailUsername");
+  const emailInput = document.getElementById("detailEmail");
+
+  if (usernameInput) usernameInput.value = username;
+  if (emailInput) emailInput.value = `${String(username).toLowerCase()}@gmail.com`;
+  list?.classList.add("hidden");
+  detail?.classList.add("active");
+}
+
+function showUserList() {
+  document.getElementById("usersListView")?.classList.remove("hidden");
+  document.getElementById("userDetailView")?.classList.remove("active");
+}
+
+window.openUserDetail = openUserDetail;
+window.showUserList = showUserList;
+
+let snapshotChart = null;
+
+function renderSnapshotChart() {
+  const canvas = document.getElementById("snapshotChart");
+  if (!canvas || typeof Chart === "undefined") return;
+
+  if (snapshotChart) {
+    snapshotChart.destroy();
+    snapshotChart = null;
+  }
+
+  const labels = Array.from({ length: 160 }, (_, index) => {
+    const hour = 10 + Math.floor(index / 20);
+    const minute = (44 + index) % 60;
+    return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
+  });
+
+  const smsCount = labels.map((_, index) => {
+    if (index < 42) return randomInt(55, 225);
+    if (index > 132) return randomInt(95, 165);
+    return randomInt(5, 60);
+  });
+  const noDr = labels.map((_, index) => {
+    const base = index < 42 ? randomInt(5, 18) : index > 132 ? randomInt(7, 20) : randomInt(0, 16);
+    return clamp(base + randomInt(-4, 7), 0, 28);
+  });
+  const delivered = labels.map((_, index) => {
+    const dip = index % 31 === 0 ? randomInt(55, 72) : randomInt(80, 98);
+    return clamp(dip + randomInt(-8, 6), 45, 100);
+  });
+
+  snapshotChart = new Chart(canvas, {
+    data: {
+      labels,
+      datasets: [
+        {
+          type: "line",
+          label: "sms count",
+          data: smsCount,
+          borderColor: "#9ca3af",
+          backgroundColor: "rgba(156,163,175,0.22)",
+          borderWidth: 1,
+          pointRadius: 0,
+          tension: 0,
+          yAxisID: "y",
+        },
+        {
+          type: "line",
+          label: "% No DR",
+          data: noDr,
+          borderColor: "#b91c1c",
+          backgroundColor: "rgba(185,28,28,0.12)",
+          borderWidth: 3,
+          pointRadius: 0,
+          tension: 0.15,
+          yAxisID: "y1",
+        },
+        {
+          type: "line",
+          label: "% Delivered",
+          data: delivered,
+          borderColor: "#00008b",
+          backgroundColor: "rgba(0,0,139,0.1)",
+          borderWidth: 4,
+          pointRadius: 0,
+          tension: 0.15,
+          yAxisID: "y1",
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: false,
+      plugins: {
+        legend: { display: false },
+      },
+      scales: {
+        x: {
+          grid: { color: "rgba(100,116,139,0.25)" },
+          ticks: {
+            color: "#5b6475",
+            maxTicksLimit: 18,
+            maxRotation: 55,
+            minRotation: 55,
+          },
+        },
+        y: {
+          min: 0,
+          max: 250,
+          grid: { color: "rgba(22,101,52,0.35)", borderDash: [4, 3] },
+          ticks: { color: "#5b6475" },
+        },
+        y1: {
+          position: "right",
+          min: 0,
+          max: 100,
+          grid: { drawOnChartArea: false },
+          ticks: { color: "#5b6475" },
+          title: { display: true, text: "%", color: "#111827" },
+        },
+      },
+    },
+  });
+}
+
+window.renderSnapshotChart = renderSnapshotChart;
+
+let customReportCharts = [];
+
+function destroyCustomReportCharts() {
+  customReportCharts.forEach((chart) => chart.destroy());
+  customReportCharts = [];
+}
+
+function createReportChart(canvasId, labels, smsCount, deliveredCount, undeliveredCount, sentCount) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas || typeof Chart === "undefined") return;
+
+  const sentPercent = sentCount.map((value, index) => Math.round((value / Math.max(1, smsCount[index])) * 100));
+  const deliveredPercent = deliveredCount.map((value, index) => Math.round((value / Math.max(1, smsCount[index])) * 100));
+  const undeliveredPercent = undeliveredCount.map((value, index) => Math.round((value / Math.max(1, smsCount[index])) * 100));
+  const dlr = deliveredPercent.map((value, index) => clamp(value + sentPercent[index], 0, 100));
+
+  const chart = new Chart(canvas, {
+    type: "line",
+    data: {
+      labels,
+      datasets: [
+        { label: "sent %", data: sentPercent, borderColor: "#f3b29e", backgroundColor: "transparent", yAxisID: "y1", borderWidth: 3, pointRadius: 3 },
+        { label: "delivered %", data: deliveredPercent, borderColor: "#5b8f68", backgroundColor: "transparent", yAxisID: "y1", borderWidth: 3, pointRadius: 3 },
+        { label: "undelivered %", data: undeliveredPercent, borderColor: "#3f5fa8", backgroundColor: "transparent", yAxisID: "y1", borderWidth: 3, pointRadius: 3 },
+        { label: "DLR / DR %", data: dlr, borderColor: "#67267d", backgroundColor: "transparent", yAxisID: "y1", borderWidth: 4, pointRadius: 4 },
+        { label: "sms count", data: smsCount, borderColor: "#f2d21b", backgroundColor: "transparent", yAxisID: "y", borderWidth: 4, pointRadius: 4 },
+        { label: "sent count", data: sentCount, borderColor: "#a92222", backgroundColor: "transparent", yAxisID: "y", borderWidth: 4, pointRadius: 4 },
+        { label: "delivered count", data: deliveredCount, borderColor: "#008000", backgroundColor: "transparent", yAxisID: "y", borderWidth: 4, pointRadius: 4 },
+        { label: "undelivered count", data: undeliveredCount, borderColor: "#00008b", backgroundColor: "transparent", yAxisID: "y", borderWidth: 4, pointRadius: 4 },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: false,
+      plugins: {
+        legend: {
+          display: true,
+          position: "top",
+          labels: { boxWidth: 34, color: "#4b5563", font: { size: 12, weight: "700" } },
+        },
+      },
+      scales: {
+        x: { grid: { color: "rgba(100,116,139,0.2)" }, ticks: { color: "#6b7280", maxRotation: 45, minRotation: 0 } },
+        y: { beginAtZero: true, grid: { color: "rgba(100,116,139,0.24)" }, ticks: { color: "#6b7280" } },
+        y1: { position: "right", min: 0, max: 100, grid: { drawOnChartArea: false }, ticks: { color: "#6b7280" } },
+      },
+    },
+  });
+  customReportCharts.push(chart);
+}
+
+function createHourlyComparisonChart() {
+  const canvas = document.getElementById("reportHourlyComparisonChart");
+  if (!canvas || typeof Chart === "undefined") return;
+
+  const labels = ["23", "22", "21", "20", "19", "18", "17", "16", "15", "14", "13", "12", "11", "10", "09", "08", "07", "06", "05", "04", "03", "02", "01", "00"];
+  const smsCount = [1225, 948, 957, 745, 630, 955, 1762, 3031, 12221, 12760, 9080, 6340, 6020, 6120, 12140, 11820, 925, 675, 463, 406, 502, 544, 714, 867];
+  const oneDayBefore = [883, 824, 558, 474, 396, 581, 709, 1030, 12273, 11860, 5420, 5680, 6020, 5420, 5860, 3270, 2180, 1810, 2320, 1450, 1720, 1540, 824, 883];
+  const sevenDaysBefore = [1225, 948, 957, 745, 630, 955, 1762, 3031, 12221, 12760, 9080, 6340, 6020, 7800, 9200, 4200, 3280, 2700, 2200, 1560, 1690, 1580, 900, 1100];
+
+  const chart = new Chart(canvas, {
+    type: "line",
+    data: {
+      labels,
+      datasets: [
+        { label: "sms count", data: smsCount, borderColor: "#008000", backgroundColor: "transparent", borderWidth: 4, pointRadius: 3, tension: 0.32 },
+        { label: "1 day before", data: oneDayBefore, borderColor: "#a92222", backgroundColor: "transparent", borderWidth: 4, pointRadius: 3, tension: 0.32 },
+        { label: "7 days before", data: sevenDaysBefore, borderColor: "#00008b", backgroundColor: "transparent", borderWidth: 4, pointRadius: 3, tension: 0.32 },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: false,
+      plugins: {
+        legend: {
+          display: true,
+          position: "top",
+          labels: { boxWidth: 34, color: "#4b5563", font: { size: 12, weight: "700" } },
+        },
+      },
+      scales: {
+        x: { reverse: true, grid: { color: "rgba(100,116,139,0.22)" }, ticks: { color: "#6b7280" } },
+        y: { position: "right", beginAtZero: true, max: 16000, grid: { color: "rgba(100,116,139,0.24)" }, ticks: { color: "#6b7280" } },
+      },
+    },
+  });
+  customReportCharts.push(chart);
+}
+
+function renderCustomReportCharts() {
+  destroyCustomReportCharts();
+  createReportChart(
+    "reportHourlyChart",
+    ["00", "01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12", "13", "14", "15", "16", "17", "18"],
+    [720, 620, 540, 510, 380, 420, 560, 680, 11800, 11047, 6568, 6325, 3167, 2288, 2414, 2597, 4868, 12430, 258],
+    [420, 380, 320, 300, 260, 280, 390, 450, 9992, 14813, 5750, 5533, 2767, 2035, 2171, 2253, 4163, 4809, 208],
+    [200, 180, 150, 120, 90, 110, 130, 170, 1311, 2162, 627, 580, 301, 201, 190, 244, 456, 5476, 18],
+    [80, 62, 45, 45, 30, 34, 55, 80, 458, 769, 193, 224, 99, 52, 55, 102, 251, 2145, 32],
+  );
+  createReportChart(
+    "reportDailyChart",
+    Array.from({ length: 20 }, (_, index) => `2026-05-${String(index + 1).padStart(2, "0")}`),
+    [128000, 100000, 98000, 106000, 99000, 96000, 90000, 101000, 88000, 84000, 101000, 99000, 108000, 91000, 92000, 86000, 81000, 92265, 86140, 69614],
+    [75000, 69000, 67000, 74000, 70000, 68000, 69000, 80000, 70000, 66000, 82000, 79000, 91000, 63800, 74000, 70000, 66863, 75356, 70374, 58730],
+    [45000, 30000, 32000, 29000, 26000, 27000, 24000, 22000, 24000, 24000, 21000, 22000, 16000, 24580, 19283, 18039, 18455, 22166, 19256, 11906],
+    [6000, 3500, 3600, 3700, 3200, 3400, 2800, 2500, 3200, 2800, 4600, 4000, 5300, 4639, 1678, 1180, 1328, 147, 758, 4489],
+  );
+  createReportChart(
+    "reportMonthlyChart",
+    ["2026 January", "2026 March", "2026 April", "2026 May"],
+    [16852, 14, 610969, 1900013],
+    [16848, 3, 202501, 1455857],
+    [0, 4, 390302, 412710],
+    [2, 0, 8682, 75629],
+  );
+  createHourlyComparisonChart();
+  updateCustomReportPeriod();
+}
+
+window.renderCustomReportCharts = renderCustomReportCharts;
+
+function updateCustomReportPeriod() {
+  const selected = document.getElementById("customReportPeriod")?.value || "Daily";
+  document.querySelectorAll(".report-period-view").forEach((section) => {
+    section.classList.toggle("active", section.dataset.reportPeriod === selected);
+  });
+
+  customReportCharts.forEach((chart) => chart.resize());
+}
+
+window.updateCustomReportPeriod = updateCustomReportPeriod;
 
 function normalizeFilterValue(value) {
   return String(value || "all")

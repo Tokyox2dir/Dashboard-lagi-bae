@@ -1,4 +1,56 @@
-<div class="module-page">
-  <div class="module-head"><span>Transaction</span><h2>Status Checker</h2><p>Tempat pengecekan status transaksi berdasarkan message id, account, atau sender.</p></div>
-  <div class="module-grid"><div class="module-card"><span>Lookup</span><strong>Ready</strong><small>Search by trx id</small></div><div class="module-card"><span>Gateway</span><strong>Online</strong><small>Status sync active</small></div><div class="module-card"><span>Latency</span><strong>124 ms</strong><small>Average response</small></div></div>
+<div class="status-check-page">
+  <section class="status-check-card">
+    <h2>Check Status</h2>
+    <div class="status-check-form">
+      <div class="status-check-field">
+        <label>Table</label>
+        <select>
+          <option>Log</option>
+          <option>Callback</option>
+          <option>Archive</option>
+        </select>
+      </div>
+      <div class="status-check-field">
+        <label>Type id</label>
+        <select>
+          <option>Trx Id</option>
+          <option>Msg Id</option>
+          <option>Trans Id</option>
+        </select>
+      </div>
+      <div class="status-check-field status-check-textarea">
+        <label>Trx ID</label>
+        <textarea placeholder="Contoh format code : kode1 kode2"></textarea>
+      </div>
+      <div class="status-check-actions">
+        <button type="button" class="status-btn status-btn-search">Search</button>
+        <button type="button" class="status-btn status-btn-export">Export</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="status-check-card status-result-card">
+    <div class="status-table-wrap">
+      <table class="status-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Date</th>
+            <th>Trx ID</th>
+            <th>Status</th>
+            <th>Msg ID</th>
+            <th>Trans ID</th>
+            <th>Message</th>
+            <th>Parts</th>
+            <th>Source</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td colspan="9" class="status-empty">No data. Input Trx ID lalu tekan Search.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
 </div>

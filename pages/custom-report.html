@@ -1,0 +1,146 @@
+<div class="custom-report-page">
+  <section class="report-filter-card">
+    <div class="report-filter-grid">
+      <label>Period</label>
+      <select id="customReportPeriod" onchange="updateCustomReportPeriod()">
+        <option>Daily</option>
+        <option>Hourly</option>
+        <option>Hourly Comparison</option>
+        <option>Monthly</option>
+      </select>
+
+      <label>Month / Year</label>
+      <div class="report-two-col">
+        <input type="text" value="May" />
+        <input type="text" value="2026" />
+      </div>
+
+      <label>Company</label>
+      <div class="report-two-col">
+        <select><option>Select group</option><option>Yulore</option><option>GOT_OTP</option></select>
+        <select><option>Select account</option><option>YULORE_HTTP</option><option>SF_A2P_2</option></select>
+      </div>
+
+      <label>Telco</label>
+      <select><option>Select Telco</option><option>Telkomsel</option><option>Indosat</option><option>XL</option></select>
+
+      <label>Source</label>
+      <select><option>Select Source</option><option>OTP</option><option>MKT</option><option>Internal</option></select>
+
+      <label>Gateway</label>
+      <select><option>Select Gateway</option><option>HTTP_YULORE</option><option>TOG_DOM_DIR</option></select>
+
+      <span></span>
+      <button type="button" onclick="updateCustomReportPeriod()">Generate Report</button>
+    </div>
+  </section>
+
+  <div class="report-period-view" data-report-period="Hourly">
+  <section class="report-section">
+    <div class="report-section-title">Hourly Chart</div>
+    <div class="custom-chart-wrap hourly">
+      <canvas id="reportHourlyChart"></canvas>
+    </div>
+  </section>
+  <section class="report-table-card">
+    <table class="custom-report-table">
+      <thead>
+        <tr>
+          <th>#</th><th>Hour</th><th>SMS Count</th><th>SMS Parts !</th><th>Sent</th><th>Failed</th><th>Delivered</th><th>Undelivered</th><th>DLR</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>1</td><td>18</td><td>258</td><td>258</td><td>32 / 12%</td><td>0</td><td>208 / 81%</td><td>18 / 7%</td><td>88%</td></tr>
+        <tr><td>2</td><td>17</td><td>12,430</td><td>12,430</td><td>2,145 / 17%</td><td>0</td><td>4,809 / 39%</td><td>5,476 / 44%</td><td>83%</td></tr>
+        <tr><td>3</td><td>16</td><td>4,868</td><td>4,870</td><td>251 / 5%</td><td>0</td><td>4,163 / 85%</td><td>456 / 9%</td><td>95%</td></tr>
+        <tr><td>4</td><td>15</td><td>2,597</td><td>2,599</td><td>102 / 4%</td><td>0</td><td>2,253 / 87%</td><td>244 / 9%</td><td>96%</td></tr>
+        <tr><td>5</td><td>14</td><td>2,414</td><td>2,416</td><td>55 / 2%</td><td>0</td><td>2,171 / 90%</td><td>190 / 8%</td><td>98%</td></tr>
+        <tr><td>6</td><td>13</td><td>2,288</td><td>2,288</td><td>52 / 2%</td><td>0</td><td>2,035 / 89%</td><td>201 / 9%</td><td>98%</td></tr>
+      </tbody>
+    </table>
+  </section>
+  </div>
+
+  <div class="report-period-view" data-report-period="Hourly Comparison">
+  <section class="report-section">
+    <div class="report-section-title">Hourly Chart</div>
+    <div class="custom-chart-wrap hourly-comparison">
+      <canvas id="reportHourlyComparisonChart"></canvas>
+    </div>
+  </section>
+  <section class="report-table-card">
+    <table class="custom-report-table hourly-comparison-table">
+      <thead>
+        <tr>
+          <th>#</th><th>Hour</th><th>SMS Count</th><th>1 Day Before</th><th>7 Days Before</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>1</td><td>00</td><td>867</td><td>883</td><td>1,225</td></tr>
+        <tr><td>2</td><td>01</td><td>714</td><td>824</td><td>948</td></tr>
+        <tr><td>3</td><td>02</td><td>544</td><td>558</td><td>957</td></tr>
+        <tr><td>4</td><td>03</td><td>502</td><td>474</td><td>745</td></tr>
+        <tr><td>5</td><td>04</td><td>406</td><td>396</td><td>630</td></tr>
+        <tr><td>6</td><td>05</td><td>463</td><td>581</td><td>955</td></tr>
+        <tr><td>7</td><td>06</td><td>675</td><td>709</td><td>1,762</td></tr>
+        <tr><td>8</td><td>07</td><td>925</td><td>1,030</td><td>3,031</td></tr>
+        <tr><td>9</td><td>08</td><td>11,820</td><td>12,273</td><td>12,221</td></tr>
+        <tr><td>10</td><td>09</td><td>12,140</td><td>11,860</td><td>12,760</td></tr>
+        <tr><td>11</td><td>10</td><td>6,120</td><td>5,420</td><td>9,080</td></tr>
+        <tr><td>12</td><td>11</td><td>6,020</td><td>5,680</td><td>6,340</td></tr>
+      </tbody>
+    </table>
+  </section>
+  </div>
+
+  <div class="report-period-view" data-report-period="Daily">
+  <section class="report-section">
+    <div class="report-section-title">Daily Chart</div>
+    <div class="custom-chart-wrap daily">
+      <canvas id="reportDailyChart"></canvas>
+    </div>
+  </section>
+  <section class="report-table-card">
+    <table class="custom-report-table">
+      <thead>
+        <tr>
+          <th>#</th><th>Date</th><th>SMS Count</th><th>SMS Parts</th><th>Total Amount</th><th>Sent</th><th>Failed</th><th>Delivered</th><th>Undelivered</th><th>DLR</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>1</td><td>2026-05-20</td><td>69,614</td><td>76,339</td><td>0</td><td>4,489 / 6%</td><td>1214</td><td>58,730 / 77%</td><td>11,906 / 16%</td><td>93%</td></tr>
+        <tr><td>2</td><td>2026-05-19</td><td>86,140</td><td>92,001</td><td>0</td><td>758 / 1%</td><td>1613</td><td>70,374 / 76%</td><td>19,256 / 21%</td><td>97%</td></tr>
+        <tr><td>3</td><td>2026-05-18</td><td>92,265</td><td>99,414</td><td>0</td><td>147 / 0%</td><td>1745</td><td>75,356 / 76%</td><td>22,166 / 22%</td><td>98%</td></tr>
+        <tr><td>4</td><td>2026-05-17</td><td>81,922</td><td>88,459</td><td>0</td><td>1,328 / 2%</td><td>1813</td><td>66,863 / 76%</td><td>18,455 / 21%</td><td>96%</td></tr>
+      </tbody>
+    </table>
+  </section>
+  </div>
+
+  <div class="report-period-view" data-report-period="Monthly">
+  <section class="report-section">
+    <div class="report-section-title">Monthly Chart</div>
+    <div class="custom-chart-wrap monthly">
+      <canvas id="reportMonthlyChart"></canvas>
+    </div>
+  </section>
+  <section class="report-table-card">
+    <table class="custom-report-table">
+      <thead>
+        <tr>
+          <th>#</th><th>Date</th><th>SMS Count</th><th>SMS Parts</th><th>Total Amount</th><th>Sent</th><th>Failed</th><th>Delivered</th><th>Undelivered</th><th>DLR</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>1</td><td>2026 May</td><td>1,900,013</td><td>1,987,073</td><td>0</td><td>75,629 / 4%</td><td>42877</td><td>1,455,857 / 73%</td><td>412,710 / 21%</td><td>94%</td></tr>
+        <tr><td>2</td><td>2026 April</td><td>610,969</td><td>611,385</td><td>0</td><td>8,682 / 1%</td><td>9900</td><td>202,501 / 33%</td><td>390,302 / 64%</td><td>97%</td></tr>
+        <tr><td>3</td><td>2026 March</td><td>14</td><td>14</td><td>0</td><td>0 / 0%</td><td>7</td><td>3 / 21%</td><td>4 / 29%</td><td>50%</td></tr>
+        <tr><td>4</td><td>2026 January</td><td>16,852</td><td>16,852</td><td>0</td><td>2 / 0%</td><td>2</td><td>16,848 / 100%</td><td>0 / 0%</td><td>100%</td></tr>
+      </tbody>
+      <tfoot>
+        <tr><td colspan="2">Sub Total :</td><td>2,527,848</td><td>2,615,324</td><td>0</td><td>84,313</td><td>52,786</td><td>1,675,209</td><td>803,016</td><td></td></tr>
+      </tfoot>
+    </table>
+  </section>
+  </div>
+</div>

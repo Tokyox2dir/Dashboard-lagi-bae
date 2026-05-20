@@ -1,4 +1,91 @@
-<div class="module-page">
-  <div class="module-head"><span>Transaction</span><h2>Logs</h2><p>Halaman untuk daftar log transaksi realtime dan pencarian detail message.</p></div>
-  <div class="module-table-wrap"><table class="module-table"><thead><tr><th>Time</th><th>Account</th><th>Sender</th><th>Status</th></tr></thead><tbody><tr><td>15:21</td><td>GOT_OTP</td><td>Bukalapak</td><td><span class="module-pill">Delivered</span></td></tr><tr><td>15:20</td><td>SF_A2P_2</td><td>UangMe</td><td><span class="module-pill">Sent</span></td></tr></tbody></table></div>
+<div class="module-page log-page">
+  <div class="module-head">
+    <span>Transaction</span>
+    <h2>Logs</h2>
+    <p>Detail transaksi dummy dari Monitoring Overview. Klik account di popup detail untuk drill-down otomatis ke halaman ini.</p>
+  </div>
+
+  <div class="log-filter-panel">
+    <div class="log-filter-left">
+      <div class="log-field">
+        <label>Start date :</label>
+        <input type="date" id="logStartDate" value="2026-05-20" />
+        <input type="time" id="logStartTime" value="07:11" />
+      </div>
+      <div class="log-field">
+        <label>End date :</label>
+        <input type="date" id="logEndDate" value="2026-05-21" />
+        <input type="time" id="logEndTime" value="00:00" />
+      </div>
+      <div class="log-field">
+        <label>account username :</label>
+        <input type="text" id="logFilterAccount" />
+      </div>
+      <div class="log-field">
+        <label>msisdn :</label>
+        <input type="text" id="logFilterMsisdn" />
+      </div>
+      <div class="log-field">
+        <label>status :</label>
+        <input type="text" id="logFilterStatus" />
+      </div>
+      <div class="log-field">
+        <label>Trx ID :</label>
+        <input type="text" id="logFilterTrx" />
+      </div>
+      <div class="log-field">
+        <label>Msg ID :</label>
+        <input type="text" id="logFilterMsg" />
+      </div>
+      <div class="log-field">
+        <label>Supp ID :</label>
+        <input type="text" id="logFilterSupplier" />
+      </div>
+    </div>
+
+    <div class="log-filter-right">
+      <div class="log-field">
+        <label>telco :</label>
+        <input type="text" id="logFilterTelco" />
+      </div>
+      <div class="log-field">
+        <label>gateway :</label>
+        <input type="text" id="logFilterGateway" />
+      </div>
+      <div class="log-field">
+        <label>Sender ID :</label>
+        <input type="text" id="logFilterSender" />
+      </div>
+      <div class="log-field log-message-field">
+        <label>Message :</label>
+        <textarea id="logFilterMessage"></textarea>
+      </div>
+      <div class="log-filter-actions">
+        <button type="button">OK</button>
+        <button type="button">Reset</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="log-result-bar">
+    <span id="logRecordCount">Loading records...</span>
+    <span>prev | page 1 | next</span>
+  </div>
+
+  <div class="module-table-wrap log-table-wrap">
+    <table class="module-table log-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>TS</th>
+          <th>ID - MSG_ID<br />Length</th>
+          <th>Status</th>
+          <th>Account</th>
+          <th>Destination</th>
+          <th>Message</th>
+        </tr>
+      </thead>
+      <tbody id="logTransactionRows"></tbody>
+    </table>
+  </div>
 </div>

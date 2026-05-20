@@ -1,4 +1,75 @@
-<div class="module-page">
-  <div class="module-head"><span>User Management</span><h2>User Management</h2><p>Kelola user, role, permission, dan akses dashboard.</p></div>
-  <div class="module-grid"><div class="module-card"><span>Users</span><strong>24</strong><small>Active users</small></div><div class="module-card"><span>Roles</span><strong>6</strong><small>Access groups</small></div><div class="module-card"><span>Session</span><strong>11</strong><small>Online now</small></div></div>
+<div class="users-page">
+  <div class="users-list-view" id="usersListView">
+    <table class="users-table">
+      <thead>
+        <tr><th>#</th><th>Username</th><th>Last Login</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>1</td><td><button type="button" onclick="openUserDetail('dito')">dito</button></td><td>2026-05-20 16:00:36.121825</td></tr>
+        <tr><td>2</td><td><button type="button" onclick="openUserDetail('Monitoring')">Monitoring</button></td><td>2026-05-20 15:03:23.165</td></tr>
+        <tr><td>3</td><td><button type="button" onclick="openUserDetail('iqbal')">iqbal</button></td><td>2026-05-20 13:14:51.707916</td></tr>
+        <tr><td>4</td><td><button type="button" onclick="openUserDetail('dwi')">dwi</button></td><td>2026-05-20 09:50:09.011733</td></tr>
+        <tr><td>5</td><td><button type="button" onclick="openUserDetail('gladwyn')">gladwyn</button></td><td>2026-05-20 00:10:37.842283</td></tr>
+        <tr><td>6</td><td><button type="button" onclick="openUserDetail('tika')">tika</button></td><td>2026-05-19 20:41:36.343156</td></tr>
+        <tr><td>7</td><td><button type="button" onclick="openUserDetail('agiel')">agiel</button></td><td>2026-05-19 15:19:20.407676</td></tr>
+        <tr><td>8</td><td><button type="button" onclick="openUserDetail('baneztopup')">baneztopup</button></td><td>2026-05-18 14:46:59.967234</td></tr>
+        <tr><td>9</td><td><button type="button" onclick="openUserDetail('vio')">vio</button></td><td>2026-05-17 21:46:41.463725</td></tr>
+        <tr><td>10</td><td><button type="button" onclick="openUserDetail('root')">root</button></td><td>2026-05-06 18:47:11.904764</td></tr>
+        <tr><td>11</td><td><button type="button" onclick="openUserDetail('jason')">jason</button></td><td>2026-04-18 07:51:45.210201</td></tr>
+        <tr><td>12</td><td><button type="button" onclick="openUserDetail('fat')">fat</button></td><td>2026-04-18 07:18:32.617615</td></tr>
+        <tr><td>13</td><td><button type="button" onclick="openUserDetail('superadmin')">superadmin</button></td><td>2026-01-28 18:06:16.756578</td></tr>
+        <tr><td>14</td><td><button type="button" onclick="openUserDetail('Fadhil')">Fadhil</button></td><td></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="user-detail-view" id="userDetailView">
+    <div class="user-form-panel">
+      <div class="user-form-grid">
+        <label>Username</label>
+        <input type="text" id="detailUsername" value="dito" disabled />
+
+        <label>Email</label>
+        <input type="email" id="detailEmail" value="qwe@gmail.com" />
+
+        <label>Password</label>
+        <input type="password" />
+
+        <label>Role</label>
+        <select>
+          <option>Noc</option>
+          <option>Admin</option>
+          <option>Operator</option>
+        </select>
+
+        <span></span>
+        <button type="button" class="user-update-btn">Update</button>
+
+        <span></span>
+        <label class="otp-check"><input type="checkbox" /> Add login with otp</label>
+      </div>
+    </div>
+
+    <div class="user-rules-panel">
+      <div class="rules-title">Allowed Rules</div>
+      <div class="rules-grid">
+        <label><input type="checkbox" checked /> Monitoring Overview</label>
+        <label><input type="checkbox" checked /> Logs</label>
+        <label><input type="checkbox" checked /> Status Checker</label>
+        <label><input type="checkbox" /> Rejected Logs</label>
+        <label><input type="checkbox" /> Internal Testing</label>
+        <label><input type="checkbox" checked /> Snapshot</label>
+        <label><input type="checkbox" /> Client Analytics</label>
+        <label><input type="checkbox" checked /> Custom Report</label>
+        <label><input type="checkbox" /> Sender</label>
+        <label><input type="checkbox" /> Telco Prefixes</label>
+        <label><input type="checkbox" /> Products</label>
+        <label><input type="checkbox" /> Currencies</label>
+        <label><input type="checkbox" /> Client Reconciliation</label>
+        <label><input type="checkbox" checked /> Telegram Alert Rules</label>
+        <label><input type="checkbox" /> User Management</label>
+      </div>
+      <button type="button" class="back-user-list" onclick="showUserList()">Back to user list</button>
+    </div>
+  </div>
 </div>

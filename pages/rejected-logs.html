@@ -1,4 +1,37 @@
-<div class="module-page">
-  <div class="module-head"><span>Transaction</span><h2>Rejected Logs</h2><p>Monitoring transaksi yang ditolak oleh rule, routing, atau validasi account.</p></div>
-  <div class="module-grid"><div class="module-card"><span>Rejected</span><strong>27</strong><small>Last 5 minutes</small></div><div class="module-card"><span>Main Reason</span><strong>Route</strong><small>Routing mismatch</small></div><div class="module-card"><span>Review</span><strong>8</strong><small>Open items</small></div></div>
+<div class="rejected-log-page">
+  <h2>Rejected LOG</h2>
+  <div class="rejected-filter">
+    <div class="rejected-field">
+      <label>Tanggal :</label>
+      <input type="date" />
+    </div>
+    <div class="rejected-field">
+      <label>Page :</label>
+      <input type="number" value="1" />
+    </div>
+    <div class="rejected-field">
+      <label>Size :</label>
+      <input type="number" value="50" />
+    </div>
+    <button type="button" class="rejected-search">Search</button>
+  </div>
+
+  <div class="rejected-total">Total logs: 0</div>
+
+  <div class="rejected-table-wrap">
+    <table class="rejected-table">
+      <thead>
+        <tr>
+          <th>Timestamp</th>
+          <th>Level</th>
+          <th>Reason</th>
+          <th>Username</th>
+          <th>Msisdn</th>
+          <th>Source</th>
+          <th>Message</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
 </div>

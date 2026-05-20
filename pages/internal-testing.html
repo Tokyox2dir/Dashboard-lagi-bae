@@ -1,4 +1,122 @@
-<div class="module-page">
-  <div class="module-head"><span>Transaction</span><h2>Internal Testing</h2><p>Area test internal untuk simulasi traffic, callback, dan routing sebelum production.</p></div>
-  <div class="module-grid"><div class="module-card"><span>Scenario</span><strong>12</strong><small>Test cases</small></div><div class="module-card"><span>Last Run</span><strong>Pass</strong><small>Smoke test</small></div><div class="module-card"><span>Sandbox</span><strong>Active</strong><small>Safe endpoint</small></div></div>
+<div class="internal-test-page">
+  <section class="internal-card">
+    <div class="internal-head">
+      <h2>Send SMS (Test)</h2>
+      <div>
+        <button type="button">Add Number</button>
+        <button type="button">Config Ptest001</button>
+      </div>
+    </div>
+
+    <div class="internal-form">
+      <label>Total :</label>
+      <div class="internal-two-col">
+        <input type="text" placeholder="Total SMS" />
+        <input type="text" placeholder="Kirim Bersamaan" />
+      </div>
+
+      <label>Gateway :</label>
+      <select>
+        <option></option>
+        <option>HTTP_YULORE</option>
+        <option>TOG_DOM_DIR</option>
+      </select>
+
+      <label>Sender :</label>
+      <input type="text" />
+
+      <label>Destination:</label>
+      <div>
+        <div class="operator-tabs">
+          <button type="button">All Operator</button>
+          <button type="button">Telkomsel</button>
+          <button type="button">Indosat</button>
+          <button type="button">XL</button>
+          <button type="button">Three</button>
+          <button type="button">Axis</button>
+          <button type="button">SmartFren</button>
+        </div>
+        <input type="text" placeholder="Contoh: 62812, 62898..." />
+        <table class="destination-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Nomor Tujuan</th>
+              <th>Operator</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <label>Type :</label>
+      <div class="type-tabs">
+        <button type="button">OTP</button>
+        <button type="button">MKT</button>
+      </div>
+
+      <label>SMS Text :</label>
+      <div>
+        <textarea></textarea>
+        <div class="char-count">Jumlah karakter: 0</div>
+      </div>
+
+      <span></span>
+      <button type="button" class="send-test-btn">Send</button>
+    </div>
+  </section>
+
+  <section class="internal-card">
+    <h2 class="log-test-title">Log Test</h2>
+    <div class="log-test-filter">
+      <label>Date From</label>
+      <input type="date" value="2026-05-20" />
+      <label>Until</label>
+      <input type="date" value="2026-05-21" />
+      <button type="button">Search</button>
+    </div>
+
+    <div class="test-table-tools">
+      <label>Search: <input type="text" /></label>
+      <label>Show <select><option>10</option><option>25</option><option>50</option></select> entries</label>
+      <div>Previous&nbsp;&nbsp;&nbsp;1&nbsp;&nbsp;&nbsp;2&nbsp;&nbsp;&nbsp;3&nbsp;&nbsp;&nbsp;4&nbsp;&nbsp;&nbsp;Next</div>
+    </div>
+
+    <div class="test-table-wrap">
+      <table class="test-log-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>TS</th>
+            <th>ID - MSG_ID<br />Length</th>
+            <th>Status</th>
+            <th>Account</th>
+            <th>Destination</th>
+            <th>Message</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>1</td>
+            <td>2026-05-20 10:27:33.362986 (Cashcepat)</td>
+            <td><a href="#">2449273</a> - (6a0d2a259ca97f015efbc53a)<br />26 (1)</td>
+            <td><strong>delivered</strong> : 0.071 s<br />0: Delivered</td>
+            <td>ptest001 [http]<br />206.189.89.239</td>
+            <td>6289501182674<br />Three [Engage_SA / HTTP]</td>
+            <td>(Cashcepat) test marketing</td>
+          </tr>
+          <tr>
+            <td>2</td>
+            <td>2026-05-20 10:27:33.310773 (Cashcepat)</td>
+            <td><a href="#">2449270</a> - (6a0d2a25812f93cf6a63194c)<br />26 (1)</td>
+            <td><strong>delivered</strong> : 0.129 s<br />0: Delivered</td>
+            <td>ptest001 [http]<br />206.189.89.239</td>
+            <td>6285716653184<br />Indosat [Engage_SA / HTTP]</td>
+            <td>(Cashcepat) test marketing</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
 </div>

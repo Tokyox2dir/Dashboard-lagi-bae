@@ -1,0 +1,132 @@
+<div class="client-analytics-page">
+  <div class="client-analytics-head">
+    <div>
+      <span>Analytics</span>
+      <h2>Client Analytics</h2>
+      <p>Traffic drop detection by client, sender, and telco. Comparing today against yesterday and the same day last week.</p>
+    </div>
+    <div class="client-analytics-controls">
+      <label>
+        Date
+        <input type="date" value="2026-05-20" />
+      </label>
+      <label>
+        Type
+        <select>
+          <option>All Traffic</option>
+          <option>Drop Only</option>
+          <option>Growth Only</option>
+        </select>
+      </label>
+      <button type="button">Search</button>
+    </div>
+  </div>
+
+  <div class="client-drop-summary">
+    <div>
+      <span>Drop Client/Sender</span>
+      <strong class="summary-drop">5</strong>
+      <small>Need attention</small>
+    </div>
+    <div>
+      <span>Growth Client/Sender</span>
+      <strong class="summary-growth">3</strong>
+      <small>Traffic increasing</small>
+    </div>
+    <div>
+      <span>Worst Drop vs Yesterday</span>
+      <strong>-2,250</strong>
+      <small>Yulore / Moka</small>
+    </div>
+  </div>
+
+  <div class="client-analytics-table-wrap">
+    <table class="client-analytics-table">
+      <thead>
+        <tr>
+          <th>Client</th>
+          <th>Sender</th>
+          <th>Telco</th>
+          <th>Today</th>
+          <th>1 Day Before</th>
+          <th>7 Day Before</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="drop-row high">
+          <td>Yulore</td>
+          <td>Moka</td>
+          <td>Telkomsel</td>
+          <td>10,000</td>
+          <td>11,000 <span class="drop-badge">-1,000 (-9.1%)</span></td>
+          <td>10,500 <span class="drop-badge">-500 (-4.8%)</span></td>
+          <td><span class="drop-status high">High Drop</span></td>
+        </tr>
+        <tr class="drop-row high">
+          <td>GOT_OTP</td>
+          <td>Bukalapak</td>
+          <td>Indosat</td>
+          <td>8,700</td>
+          <td>9,950 <span class="drop-badge">-1,250 (-12.6%)</span></td>
+          <td>10,600 <span class="drop-badge">-1,900 (-17.9%)</span></td>
+          <td><span class="drop-status high">High Drop</span></td>
+        </tr>
+        <tr class="drop-row medium">
+          <td>SF_A2P_2</td>
+          <td>UangMe</td>
+          <td>XL</td>
+          <td>7,420</td>
+          <td>8,010 <span class="drop-badge">-590 (-7.4%)</span></td>
+          <td>7,880 <span class="drop-badge">-460 (-5.8%)</span></td>
+          <td><span class="drop-status medium">Medium Drop</span></td>
+        </tr>
+        <tr class="drop-row medium">
+          <td>YULORE_HTTP</td>
+          <td>SINGA.ID</td>
+          <td>Three</td>
+          <td>6,120</td>
+          <td>6,950 <span class="drop-badge">-830 (-11.9%)</span></td>
+          <td>6,400 <span class="drop-badge">-280 (-4.4%)</span></td>
+          <td><span class="drop-status medium">Medium Drop</span></td>
+        </tr>
+        <tr class="drop-row low">
+          <td>OMNI_WAGEN</td>
+          <td>BRI-NOTIF</td>
+          <td>Telkomsel</td>
+          <td>5,880</td>
+          <td>6,020 <span class="drop-badge">-140 (-2.3%)</span></td>
+          <td>5,940 <span class="drop-badge">-60 (-1.0%)</span></td>
+          <td><span class="drop-status low">Low Drop</span></td>
+        </tr>
+        <tr class="growth-row high">
+          <td>Cashcepat</td>
+          <td>OTP</td>
+          <td>Indosat</td>
+          <td>12,400</td>
+          <td>10,900 <span class="growth-badge">+1,500 (+13.8%)</span></td>
+          <td>9,800 <span class="growth-badge">+2,600 (+26.5%)</span></td>
+          <td><span class="growth-status high">High Growth</span></td>
+        </tr>
+        <tr class="growth-row medium">
+          <td>RupiahCepat</td>
+          <td>Reminder</td>
+          <td>Telkomsel</td>
+          <td>9,250</td>
+          <td>8,700 <span class="growth-badge">+550 (+6.3%)</span></td>
+          <td>8,110 <span class="growth-badge">+1,140 (+14.1%)</span></td>
+          <td><span class="growth-status medium">Medium Growth</span></td>
+        </tr>
+        <tr class="growth-row low">
+          <td>SINGA.ID</td>
+          <td>Login OTP</td>
+          <td>XL</td>
+          <td>6,840</td>
+          <td>6,620 <span class="growth-badge">+220 (+3.3%)</span></td>
+          <td>6,700 <span class="growth-badge">+140 (+2.1%)</span></td>
+          <td><span class="growth-status low">Low Growth</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

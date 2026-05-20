@@ -1,0 +1,61 @@
+<div class="snapshot-page">
+  <h2>Snapshot Data(after 2 mins) , Group by minute</h2>
+
+  <div class="snapshot-filter">
+    <label>datetime before :</label>
+    <div class="snapshot-date-row">
+      <input type="date" value="2026-05-21" />
+      <input type="time" value="00:00" step="1" />
+    </div>
+
+    <label>Account :</label>
+    <select><option></option><option>GOT_OTP</option><option>YULORE_HTTP</option></select>
+
+    <label>telco :</label>
+    <select><option></option><option>Telkomsel</option><option>Indosat</option><option>XL</option></select>
+
+    <label>gateway :</label>
+    <select><option></option><option>HTTP_YULORE</option><option>TOG_DOM_DIR</option></select>
+
+    <label>sender :</label>
+    <select><option></option><option>Bukalapak</option><option>UangMe</option><option>SINGA.ID</option></select>
+
+    <span></span>
+    <button type="button">OK</button>
+  </div>
+
+  <div class="snapshot-chart-card">
+    <div class="snapshot-legend">
+      <span><i class="sms"></i>sms count</span>
+      <span><i class="nodr"></i>% No DR</span>
+      <span><i class="delivered"></i>% Delivered</span>
+    </div>
+    <div class="snapshot-chart">
+      <canvas id="snapshotChart"></canvas>
+    </div>
+  </div>
+
+  <div class="snapshot-table-wrap">
+    <table class="snapshot-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Time</th>
+          <th>Records</th>
+          <th>Sent</th>
+          <th>No DR</th>
+          <th>Delivered</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>1</td><td>16:38</td><td>33</td><td>4</td><td>12 %</td><td>29</td><td>88 %</td></tr>
+        <tr><td>2</td><td>16:37</td><td>34</td><td>2</td><td>6 %</td><td>32</td><td>94 %</td></tr>
+        <tr><td>3</td><td>16:36</td><td>30</td><td>2</td><td>7 %</td><td>28</td><td>93 %</td></tr>
+        <tr><td>4</td><td>16:35</td><td>31</td><td>6</td><td>19 %</td><td>21</td><td>68 %</td></tr>
+        <tr><td>5</td><td>16:34</td><td>26</td><td>0</td><td>0 %</td><td>25</td><td>96 %</td></tr>
+        <tr><td>6</td><td>16:33</td><td>30</td><td>2</td><td>7 %</td><td>24</td><td>80 %</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
