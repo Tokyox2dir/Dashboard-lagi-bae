@@ -75,34 +75,16 @@ body {
 .brand-block {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 0 24px 24px;
+  padding: 0 16px 20px;
   border-bottom: 1px solid rgba(255,255,255,0.08);
 }
 
-.brand-mark {
-  font-family: 'Syne', sans-serif;
-  font-size: 28px;
-  font-weight: 900;
-  color: #38bdf8;
-  letter-spacing: -1px;
-}
-
-.brand-name {
-  font-family: 'Plus Jakarta Sans', sans-serif;
-  font-size: 13px;
-  font-weight: 800;
-  line-height: 1;
-  text-transform: uppercase;
-}
-
-.brand-subtitle {
-  margin-top: 3px;
-  font-size: 10px;
-  font-weight: 800;
-  color: #60a5fa;
-  letter-spacing: 0.8px;
-  text-transform: uppercase;
+.brand-logo-img {
+  width: 100%;
+  display: block;
+  max-height: 58px;
+  object-fit: contain;
+  object-position: left center;
 }
 
 .sidebar-nav { padding: 14px 0 32px; }
@@ -542,7 +524,11 @@ body {
     gap: 4px;
     padding: 12px;
   }
-  .brand-block { padding-bottom: 16px; }
+  .brand-block { padding: 0 16px 16px; }
+  .brand-logo-img {
+    max-width: 220px;
+    max-height: 46px;
+  }
   .nav-label,
   .nav-children { display: none !important; }
   .nav-item {
