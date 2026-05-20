@@ -1,0 +1,70 @@
+<div class="queue-page">
+  <h2>Queue</h2>
+  <div class="queue-table-wrap">
+    <table class="queue-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Log ID</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td colspan="2"></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>ps info</h3>
+  <pre class="queue-pre">12:32:01 up 120 days, 13:33,  0 users,  load average: 1.06, 1.07, 1.08
+USER       TTY        LOGIN@   IDLE   JCPU   PCPU WHAT
+
+               total        used        free      shared  buff/cache   available
+Mem:           7.5Gi       2.0Gi       136Mi      161Mi       5.8Gi       5.5Gi
+Swap:             0B          0B          0B
+
+Filesystem      Size  Used Avail Use% Mounted on
+devtmpfs        4.0M     0  4.0M   0% /dev
+tmpfs           3.8G     0  3.8G   0% /dev/shm
+tmpfs           1.6G  152M  1.4G  10% /run
+/dev/vda1        49G   15G   35G  30% /
+/dev/vda2       994M  444M  551M  45% /boot
+/dev/vda15       99M  7.1M   92M   8% /boot/efi
+/dev/sda        100G   33G   68G  33% /mnt/sgw5_app_log
+tmpfs           769M     0  769M   0% /run/user/1003
+
+    0  USER       PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND
+    1  proxy     5235  0.0  0.0  27692  7316 ?        S    Jan20   0:00 (sd-pam)
+    2  proxy     5280  0.0  0.1 825684 11248 ?        Sl   Jan20  69:37 target/release/dlr-receiver
+    3  proxy     5325  0.0  0.1 790992 11980 ?        Sl   Jan20 134:48 opensmppbox conf/smppbox/01.conf
+    4  proxy     5328  0.0  0.1 622372  8744 ?        Sl   Jan20   3:54 target/release/report-reject
+    5  proxy     5337  0.0  0.0 418308  7744 ?        Sl   Jan20 134:21 target/release/summary
+    6  proxy     5367  0.0  0.1 490220 10148 ?        Sl   Jan20   0:05 target/release/rest-api
+    7  proxy     5388  0.0  0.1 696592 11656 ?        Sl   Jan20  33:27 target/release/report Http
+    8  proxy     5397  0.0  0.2 622724 19444 ?        Sl   Jan20  49:13 target/release/report Smpp
+    9  proxy     6493  0.0  0.0 417776  7360 ?        Sl   Jan20  11:31 target/release/stats
+   10  proxy     6519  0.0  0.1 696612 11800 ?        Sl   Jan20  33:59 target/release/report Http
+   11  proxy     6526  0.0  0.2 622724 19444 ?        Sl   Jan20  49:20 target/release/report Smpp
+   12  proxy   715464  0.0  0.1 623568 12136 ?        Sl   Jan29  31:32 target/release/gw-sample
+   13  proxy  1416256  0.0  0.2 2068400 20752 ?       Sl   Mar31  42:34 bearerbox-esm_class conf/gw-smpp-2.conf
+   14  proxy  1416268  0.0  0.1 742324  9208 ?        Sl   Mar31  23:55 smsbox-esm_class conf/gw-smpp-2.conf
+   15  proxy  1496470  0.0  0.2 1107840 16404 ?       Sl   Apr01  43:36 bearerbox-esm_class conf/gw-smpp.conf
+   16  proxy  1496488  0.0  0.1 742448  9320 ?        Sl   Apr01  21:05 smsbox-esm_class conf/gw-smpp.conf
+   17  proxy  1617540  0.0  0.1 488792 10836 ?        Sl   Feb10   5:46 target/release/examples/simulator-gtwx
+   18  proxy  1920784  0.0  0.1 419336  9848 ?        Sl   May18   0:00 target/release/dlr-yulore
+   19  proxy  1942431  0.0  0.1 896200 11496 ?        Sl   May18   2:04 target/release/gw-1engage-http
+   20  proxy  1942456  0.0  0.1 970444 14936 ?        Sl   May18   2:01 target/release/gw-1engage2-http
+   21  proxy  2171497  0.0  0.0 418172  7568 ?        Sl   Apr10  18:19 target/release/rotate
+   22  proxy  2178944  0.6  0.3 2463216 24672 ?       Sl   Apr10 370:17 opensmppbox conf/smppbox/02.conf
+   23  proxy  2241862  1.6  0.1 696220 15200 ?        Sl   04:55   7:30 target/release/smpp-conn-status
+   24  proxy  2276042  0.0  0.8 442844 64696 ?        Sl   11:35   0:01 target/release/web-interface
+   25  proxy  2281616  0.0  0.0      0     0 ?        Zs   12:32   0:00 [sh]
+   26  proxy  2281629  0.0  0.0   5652  2012 ?        S    12:32   0:00 nl -v 0
+   27  proxy  2508351  2.3  6.6 3042204 524044 ?      Sl   Apr15 1227:47 bearerbox conf/bearer.conf
+   28  proxy  2550951  0.1  0.1 624980 10784 ?        Sl   Apr16  57:44 target/release/gw-smpp
+   29  proxy  2774567  0.0  0.3 2116272 25156 ?       Sl   Apr19  40:58 target/release/gw-yulore
+   30  proxy  2843242 63.8  0.2 1773188 20468 ?       Sl   Apr20 28631:09 target/release/gtw
+   31  proxy  2989264  0.0  0.1 894800  8484 ?        Sl   Apr22  16:48 target/release/gw-rcs-cakra-http
+   32  proxy  3379430  0.0  0.1 884388 14044 ?        Sl   Apr27   8:59 bearerbox-esm_class conf/gw-smpp-3.conf
+   33  proxy  3379443  0.0  0.8 742192 65628 ?        Sl   Apr27   8:21 smsbox-esm_class conf/gw-smpp-3.conf
+   34  proxy  3449800  0.0  0.1 622516  8128 ?        Sl   Apr28  27:08 target/release/report Smpp_Mo</pre>
+</div>

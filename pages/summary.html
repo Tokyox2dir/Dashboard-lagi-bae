@@ -1,0 +1,80 @@
+<div class="report-summary-page">
+  <section class="summary-filter-card">
+    <h2>Report Summary</h2>
+    <div class="summary-filter-grid">
+      <label>Date From</label>
+      <input type="date" value="2026-05-21" />
+
+      <label>Telco</label>
+      <select><option></option><option>Three</option><option>XL</option><option>Indosat</option><option>Telkomsel</option></select>
+
+      <label>Until</label>
+      <input type="date" value="2026-05-22" />
+
+      <label>Gateway</label>
+      <select><option></option><option>Arta WA Gen</option><option>GPI_SMKT_HQ_Dir</option><option>ORE_FILL</option><option>TOG_Dom_Dir</option></select>
+
+      <label>Account</label>
+      <select><option></option><option>Sahridaya_WAGEN</option><option>YULORE_SMPP</option><option>SF_A2P_2</option><option>Cms_Wagen_OTP</option></select>
+
+      <label>Sender ID</label>
+      <select><option></option><option>wagen</option><option>SINGA.ID</option><option>RupiahCepat</option><option>Indosaku</option><option>Transvision</option></select>
+
+      <label>Status</label>
+      <input type="text" />
+
+      <span></span>
+      <div class="summary-actions">
+        <button type="button" class="ok">OK</button>
+        <button type="button" class="download" onclick="downloadTableCsv('summaryTable', 'report-summary.csv')">Download CSV</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="summary-table-card">
+    <div class="summary-table-tools">
+      <label>Search: <input type="search" /></label>
+      <label>Show <select><option>10</option><option>25</option><option>50</option></select> entries</label>
+      <div class="summary-pagination">
+        <a href="#">Previous</a>
+        <a href="#">1</a>
+        <a href="#">2</a>
+        <a href="#">3</a>
+        <a href="#">4</a>
+        <a href="#">5</a>
+        <span>...</span>
+        <a href="#">10</a>
+        <a href="#">Next</a>
+      </div>
+    </div>
+    <div class="summary-table-wrap">
+      <table class="summary-table" id="summaryTable">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Date</th>
+            <th>Status</th>
+            <th>Source</th>
+            <th>Gateway</th>
+            <th>Account</th>
+            <th>Telco</th>
+            <th>Count</th>
+            <th>Parts</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>1</td><td>2026-05-21</td><td>delivered</td><td>wagen</td><td>Arta WA Gen</td><td>Sahridaya_WAGEN</td><td>Three</td><td>8</td><td>8</td></tr>
+          <tr><td>2</td><td>2026-05-21</td><td>delivered</td><td>SINGA.ID</td><td>GPI_SMKT_HQ_Dir</td><td>YULORE_SMPP</td><td>Three</td><td>236</td><td>236</td></tr>
+          <tr><td>3</td><td>2026-05-21</td><td>delivered</td><td>RupiahCepat</td><td>ORE_FILL</td><td>SF_A2P_2</td><td>Three</td><td>186</td><td>186</td></tr>
+          <tr><td>4</td><td>2026-05-21</td><td>delivered</td><td>wagen</td><td>Arta WA Gen</td><td>Cms_Wagen_OTP</td><td>XL</td><td>149</td><td>149</td></tr>
+          <tr><td>5</td><td>2026-05-21</td><td>delivered</td><td>SINGA.ID</td><td>ORE_FILL</td><td>SF_A2P_2</td><td>Indosat</td><td>119</td><td>119</td></tr>
+          <tr><td>6</td><td>2026-05-21</td><td>delivered</td><td>SINGA.ID</td><td>Infobip_Dom</td><td>YULORE_SMPP</td><td>Indosat</td><td>75</td><td>75</td></tr>
+          <tr><td>7</td><td>2026-05-21</td><td>delivered</td><td>Indosaku</td><td>ORE_FILL</td><td>SF_A2P_2</td><td>Indosat</td><td>116</td><td>116</td></tr>
+          <tr><td>8</td><td>2026-05-21</td><td>delivered</td><td>RupiahCepat</td><td>ORE_FILL</td><td>SF_A2P_2</td><td>Telkomsel</td><td>545</td><td>545</td></tr>
+          <tr><td>9</td><td>2026-05-21</td><td>delivered</td><td>Transvision</td><td>TOG_Dom_Dir</td><td>Sahridaya_Dom</td><td>Telkomsel</td><td>3</td><td>3</td></tr>
+          <tr><td>10</td><td>2026-05-21</td><td>delivered</td><td>wagen</td><td>Arta WA Gen</td><td>Cms_Wagen_OTP</td><td>Three</td><td>101</td><td>101</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>

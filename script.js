@@ -41,6 +41,13 @@ function initAppNavigation() {
     `;
   };
 
+  const keepSidebarGroupVisible = (group) => {
+    if (!group) return;
+    window.setTimeout(() => {
+      group.scrollIntoView({ block: "nearest", behavior: "smooth" });
+    }, 20);
+  };
+
   const loadMenuPage = async (page, title) => {
     monitoringPage?.classList.remove("active");
     placeholderPage?.classList.add("active");
@@ -63,6 +70,7 @@ function initAppNavigation() {
     const target = document.querySelector(`[data-page="${page}"]`);
     target?.classList.add("active");
     target?.closest(".nav-group")?.classList.add("open");
+    keepSidebarGroupVisible(target?.closest(".nav-group"));
 
     if (page === "monitoring") {
       monitoringPage?.classList.add("active");
@@ -79,6 +87,7 @@ function initAppNavigation() {
       const group = toggle.closest(".nav-group");
       if (group?.querySelector(".nav-children")) {
         group.classList.toggle("open");
+        keepSidebarGroupVisible(group);
       }
     });
   });
@@ -97,6 +106,7 @@ function initAppNavigation() {
       item.classList.add("active");
       if (group && hasChildren) {
         group.classList.toggle("open", !(isParent && wasOpen));
+        keepSidebarGroupVisible(group);
       }
 
       if (item.dataset.page === "monitoring") {
@@ -999,6 +1009,14 @@ function renderCustomReportCharts() {
     [6000, 3500, 3600, 3700, 3200, 3400, 2800, 2500, 3200, 2800, 4600, 4000, 5300, 4639, 1678, 1180, 1328, 147, 758, 4489],
   );
   createReportChart(
+    "reportWeeklyChart",
+    ["2026-W18", "2026-W19", "2026-W20", "2026-W21"],
+    [498764, 556420, 612840, 478215],
+    [409775, 451260, 488750, 397112],
+    [72105, 85050, 97170, 62873],
+    [16884, 20110, 26920, 18230],
+  );
+  createReportChart(
     "reportMonthlyChart",
     ["2026 January", "2026 March", "2026 April", "2026 May"],
     [16852, 14, 610969, 1900013],
@@ -1022,6 +1040,188 @@ function updateCustomReportPeriod() {
 }
 
 window.updateCustomReportPeriod = updateCustomReportPeriod;
+
+function downloadTableCsv(tableId, filename = "export.csv") {
+  const table = document.getElementById(tableId);
+  if (!table) return;
+
+  const rows = Array.from(table.querySelectorAll("tr"));
+  const csv = rows
+    .map((row) =>
+      Array.from(row.children)
+        .map((cell) => {
+          const value = cell.innerText.replace(/\s+/g, " ").trim().replace(/"/g, '""');
+          return `"${value}"`;
+        })
+        .join(","),
+    )
+    .join("\n");
+
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
+
+window.downloadTableCsv = downloadTableCsv;
+
+const reconcileClientRows = [
+  { date: "2026-05-21", client: "GOT_OTP", account: "Cms_Wagen_OTP", product: "OTP", telco: "Three", parts: 101, price: 265, usage: 26765 },
+  { date: "2026-05-21", client: "GOT_OTP", account: "Cms_Wagen_OTP", product: "OTP", telco: "XL", parts: 149, price: 270, usage: 40230 },
+  { date: "2026-05-21", client: "YULORE_HTTP", account: "YULORE_SMPP", product: "OTP", telco: "Three", parts: 236, price: 255, usage: 60180 },
+  { date: "2026-05-21", client: "YULORE_HTTP", account: "YULORE_SMPP", product: "OTP", telco: "Indosat", parts: 75, price: 250, usage: 18750 },
+  { date: "2026-05-22", client: "YULORE_HTTP", account: "YULORE_SMPP", product: "OTP", telco: "XL", parts: 144, price: 270, usage: 38880 },
+  { date: "2026-05-21", client: "SF_A2P_2", account: "SF_A2P_2", product: "Marketing", telco: "Three", parts: 186, price: 240, usage: 44640 },
+  { date: "2026-05-21", client: "SF_A2P_2", account: "SF_A2P_2", product: "Marketing", telco: "Indosat", parts: 119, price: 245, usage: 29155 },
+  { date: "2026-05-21", client: "SF_A2P_2", account: "SF_A2P_2", product: "Marketing", telco: "Telkomsel", parts: 545, price: 260, usage: 141700 },
+  { date: "2026-05-21", client: "Sahridaya_Dom", account: "Sahridaya_WAGEN", product: "OTP", telco: "Three", parts: 8, price: 230, usage: 1840 },
+  { date: "2026-05-21", client: "Sahridaya_Dom", account: "Sahridaya_Dom", product: "OTP", telco: "Telkomsel", parts: 3, price: 260, usage: 780 },
+];
+
+const crcTable = (() => {
+  const table = new Uint32Array(256);
+  for (let i = 0; i < 256; i += 1) {
+    let crc = i;
+    for (let j = 0; j < 8; j += 1) crc = crc & 1 ? 0xedb88320 ^ (crc >>> 1) : crc >>> 1;
+    table[i] = crc >>> 0;
+  }
+  return table;
+})();
+
+function crc32(bytes) {
+  let crc = 0xffffffff;
+  bytes.forEach((byte) => {
+    crc = crcTable[(crc ^ byte) & 0xff] ^ (crc >>> 8);
+  });
+  return (crc ^ 0xffffffff) >>> 0;
+}
+
+function writeString(view, offset, value) {
+  for (let i = 0; i < value.length; i += 1) view.setUint8(offset + i, value.charCodeAt(i));
+}
+
+function dosDateTime(date = new Date()) {
+  const time = (date.getHours() << 11) | (date.getMinutes() << 5) | Math.floor(date.getSeconds() / 2);
+  const day = ((date.getFullYear() - 1980) << 9) | ((date.getMonth() + 1) << 5) | date.getDate();
+  return { time, day };
+}
+
+function createZipBlob(files) {
+  const encoder = new TextEncoder();
+  const now = dosDateTime();
+  const prepared = files.map((file) => {
+    const nameBytes = encoder.encode(file.name);
+    const data = encoder.encode(file.content);
+    return { ...file, nameBytes, data, crc: crc32(data) };
+  });
+
+  const localSize = prepared.reduce((sum, file) => sum + 30 + file.nameBytes.length + file.data.length, 0);
+  const centralSize = prepared.reduce((sum, file) => sum + 46 + file.nameBytes.length, 0);
+  const endSize = 22;
+  const buffer = new ArrayBuffer(localSize + centralSize + endSize);
+  const view = new DataView(buffer);
+  const bytes = new Uint8Array(buffer);
+  const central = [];
+  let offset = 0;
+
+  prepared.forEach((file) => {
+    const localOffset = offset;
+    view.setUint32(offset, 0x04034b50, true); offset += 4;
+    view.setUint16(offset, 20, true); offset += 2;
+    view.setUint16(offset, 0, true); offset += 2;
+    view.setUint16(offset, 0, true); offset += 2;
+    view.setUint16(offset, now.time, true); offset += 2;
+    view.setUint16(offset, now.day, true); offset += 2;
+    view.setUint32(offset, file.crc, true); offset += 4;
+    view.setUint32(offset, file.data.length, true); offset += 4;
+    view.setUint32(offset, file.data.length, true); offset += 4;
+    view.setUint16(offset, file.nameBytes.length, true); offset += 2;
+    view.setUint16(offset, 0, true); offset += 2;
+    bytes.set(file.nameBytes, offset); offset += file.nameBytes.length;
+    bytes.set(file.data, offset); offset += file.data.length;
+    central.push({ file, localOffset });
+  });
+
+  const centralOffset = offset;
+  central.forEach(({ file, localOffset }) => {
+    view.setUint32(offset, 0x02014b50, true); offset += 4;
+    view.setUint16(offset, 20, true); offset += 2;
+    view.setUint16(offset, 20, true); offset += 2;
+    view.setUint16(offset, 0, true); offset += 2;
+    view.setUint16(offset, 0, true); offset += 2;
+    view.setUint16(offset, now.time, true); offset += 2;
+    view.setUint16(offset, now.day, true); offset += 2;
+    view.setUint32(offset, file.crc, true); offset += 4;
+    view.setUint32(offset, file.data.length, true); offset += 4;
+    view.setUint32(offset, file.data.length, true); offset += 4;
+    view.setUint16(offset, file.nameBytes.length, true); offset += 2;
+    view.setUint16(offset, 0, true); offset += 2;
+    view.setUint16(offset, 0, true); offset += 2;
+    view.setUint16(offset, 0, true); offset += 2;
+    view.setUint16(offset, 0, true); offset += 2;
+    view.setUint32(offset, 0, true); offset += 4;
+    view.setUint32(offset, localOffset, true); offset += 4;
+    bytes.set(file.nameBytes, offset); offset += file.nameBytes.length;
+  });
+
+  view.setUint32(offset, 0x06054b50, true); offset += 4;
+  view.setUint16(offset, 0, true); offset += 2;
+  view.setUint16(offset, 0, true); offset += 2;
+  view.setUint16(offset, prepared.length, true); offset += 2;
+  view.setUint16(offset, prepared.length, true); offset += 2;
+  view.setUint32(offset, offset - centralOffset, true); offset += 4;
+  view.setUint32(offset, centralOffset, true); offset += 4;
+  view.setUint16(offset, 0, true);
+
+  return new Blob([buffer], { type: "application/zip" });
+}
+
+function csvEscape(value) {
+  return `"${String(value ?? "").replace(/"/g, '""')}"`;
+}
+
+function exportReconcileByClientZip() {
+  const from = document.getElementById("reconcileFrom")?.value || "2026-05-21";
+  const until = document.getElementById("reconcileUntil")?.value || "2026-05-22";
+  const filtered = reconcileClientRows.filter((row) => row.date >= from && row.date <= until);
+  const grouped = filtered.reduce((acc, row) => {
+    acc[row.client] = acc[row.client] || [];
+    acc[row.client].push(row);
+    return acc;
+  }, {});
+
+  const header = ["Date", "Nama Client", "Account", "Product", "Telco", "Parts", "Price", "Usage"];
+  const files = Object.entries(grouped).map(([client, rows]) => ({
+    name: `${client.replace(/[^a-z0-9_-]+/gi, "_")}.csv`,
+    content: [
+      header.join(","),
+      ...rows.map((row) =>
+        [row.date, row.client, row.account, row.product, row.telco, row.parts, row.price, row.usage]
+          .map(csvEscape)
+          .join(","),
+      ),
+    ].join("\n"),
+  }));
+
+  if (!files.length) return;
+
+  const blob = createZipBlob(files);
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `reconcile-by-client_${from}_to_${until}.zip`;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
+
+window.exportReconcileByClientZip = exportReconcileByClientZip;
 
 function normalizeFilterValue(value) {
   return String(value || "all")
