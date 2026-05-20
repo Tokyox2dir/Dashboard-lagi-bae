@@ -12,6 +12,7 @@ let highlightedTime = null;
 
 function initAppNavigation() {
   const navItems = document.querySelectorAll("[data-page]");
+  const navToggles = document.querySelectorAll(".nav-parent:not([data-page])");
   const monitoringPage = document.getElementById("page-monitoring");
   const placeholderPage = document.getElementById("page-placeholder");
   const pageSlot = document.getElementById("pageSlot");
@@ -45,6 +46,15 @@ function initAppNavigation() {
       renderFallbackPage(title);
     }
   };
+
+  navToggles.forEach((toggle) => {
+    toggle.addEventListener("click", () => {
+      const group = toggle.closest(".nav-group");
+      if (group?.querySelector(".nav-children")) {
+        group.classList.toggle("open");
+      }
+    });
+  });
 
   navItems.forEach((item) => {
     item.addEventListener("click", async () => {

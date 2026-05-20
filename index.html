@@ -31,11 +31,15 @@
 
         <nav class="sidebar-nav" aria-label="Main navigation">
           <div class="nav-group open">
-            <button class="nav-item nav-parent active" data-page="monitoring">
-              <span class="nav-icon">📊</span>
-              <span class="nav-text">Monitoring Overview</span>
+            <button class="nav-item nav-parent" type="button">
+              <span class="nav-icon">📌</span>
+              <span class="nav-text">Overview</span>
               <span class="nav-caret">▾</span>
             </button>
+            <div class="nav-children">
+              <button class="nav-subitem active" data-page="monitoring">Monitoring Overview</button>
+              <button class="nav-subitem" data-page="business-overview">Business Overview</button>
+            </div>
           </div>
           <div class="nav-label">Components</div>
           <div class="nav-group open">
