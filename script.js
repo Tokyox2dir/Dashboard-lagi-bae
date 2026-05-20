@@ -244,8 +244,8 @@ let trafficChart;
 function buildChart() {
   const isDark = document.documentElement.getAttribute("data-theme") === "dark";
   const gridColor = isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)";
-  const tickColor = isDark ? "#6e7681" : "#718096";
-  const timeTickColor = isDark ? "#cbd5e1" : "#334155";
+  const tickColor = isDark ? "#e6edf3" : "#1a202c";
+  const timeTickColor = tickColor;
 
   const ctx = document.getElementById("trafficChart").getContext("2d");
   if (trafficChart) trafficChart.destroy();
