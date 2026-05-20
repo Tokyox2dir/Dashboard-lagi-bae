@@ -19,36 +19,196 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
   </head>
   <body>
-    <div class="topbar">
-      <div class="topbar-left">
-        <div class="topbar-logo">SMS·DASH</div>
-        <div class="topbar-status"><span></span>LIVE</div>
-      </div>
-      <div class="topbar-right">
-        <div class="last-updated" id="lastUpdated">Updated --:--:--</div>
-        <div class="live-clock" id="clock">--:--:--</div>
+    <div class="app-shell">
+      <aside class="app-sidebar">
+        <div class="brand-block">
+          <div class="brand-mark">ART</div>
+          <div>
+            <div class="brand-name">Aura Redision</div>
+            <div class="brand-subtitle">Technologies</div>
+          </div>
+        </div>
 
-        <div class="topbar-control">
-          <span>THEME</span>
-          <label class="dark-toggle">
-            <input
-              type="checkbox"
-              id="darkToggle"
-              onchange="toggleDark(this)"
-            />
-            <div class="toggle-track">
-              <div class="toggle-thumb" id="toggleIcon">☀️</div>
+        <nav class="sidebar-nav" aria-label="Main navigation">
+          <div class="nav-group open">
+            <button class="nav-item nav-parent active" data-page="monitoring">
+              <span class="nav-icon">📊</span>
+              <span class="nav-text">Monitoring Overview</span>
+              <span class="nav-caret">▾</span>
+            </button>
+          </div>
+          <div class="nav-label">Components</div>
+          <div class="nav-group open">
+            <button class="nav-item nav-parent" data-page="transaction">
+              <span class="nav-icon">💳</span>
+              <span class="nav-text">Transaction</span>
+              <span class="nav-caret">▾</span>
+            </button>
+            <div class="nav-children">
+              <button class="nav-subitem" data-page="logs">Logs</button>
+              <button class="nav-subitem" data-page="status-checker">Status Checker</button>
+              <button class="nav-subitem" data-page="rejected-logs">Rejected Logs</button>
+              <button class="nav-subitem" data-page="internal-testing">Internal Testing</button>
             </div>
-          </label>
-        </div>
+          </div>
+          <div class="nav-group">
+            <button class="nav-item nav-parent" data-page="analytics">
+              <span class="nav-icon">📈</span>
+              <span class="nav-text">Analytics</span>
+              <span class="nav-caret">▾</span>
+            </button>
+            <div class="nav-children">
+              <button class="nav-subitem" data-page="traffic-analytics">Traffic Analytics</button>
+              <button class="nav-subitem" data-page="delivery-analytics">Delivery Analytics</button>
+            </div>
+          </div>
+          <div class="nav-group">
+            <button class="nav-item nav-parent" data-page="reports">
+              <span class="nav-icon">📑</span>
+              <span class="nav-text">Reports</span>
+              <span class="nav-caret">▾</span>
+            </button>
+            <div class="nav-children">
+              <button class="nav-subitem" data-page="daily-report">Daily Report</button>
+              <button class="nav-subitem" data-page="monthly-report">Monthly Report</button>
+            </div>
+          </div>
+          <div class="nav-group">
+            <button class="nav-item nav-parent" data-page="master-data">
+              <span class="nav-icon">⚙</span>
+              <span class="nav-text">Master Data</span>
+              <span class="nav-caret">▾</span>
+            </button>
+            <div class="nav-children">
+              <button class="nav-subitem" data-page="accounts">Accounts</button>
+              <button class="nav-subitem" data-page="routing">Routing</button>
+              <button class="nav-subitem" data-page="gateway">Gateway</button>
+            </div>
+          </div>
+          <div class="nav-group">
+            <button class="nav-item nav-parent" data-page="billing">
+              <span class="nav-icon">▦</span>
+              <span class="nav-text">Billing</span>
+              <span class="nav-caret">▾</span>
+            </button>
+            <div class="nav-children">
+              <button class="nav-subitem" data-page="invoice">Invoice</button>
+              <button class="nav-subitem" data-page="balance">Balance</button>
+            </div>
+          </div>
+          <div class="nav-group">
+            <button class="nav-item nav-parent" data-page="alerts">
+              <span class="nav-icon">🔔</span>
+              <span class="nav-text">Alerts & Monitoring</span>
+              <span class="nav-caret">▾</span>
+            </button>
+            <div class="nav-children">
+              <button class="nav-subitem" data-page="alert-rules">Alert Rules</button>
+              <button class="nav-subitem" data-page="incident-log">Incident Log</button>
+            </div>
+          </div>
+          <div class="nav-group">
+            <button class="nav-item nav-parent" data-page="users">
+              <span class="nav-icon">👤</span>
+              <span class="nav-text">User Management</span>
+              <span class="nav-caret">▾</span>
+            </button>
+            <div class="nav-children">
+              <button class="nav-subitem" data-page="users-list">Users</button>
+              <button class="nav-subitem" data-page="roles">Roles</button>
+            </div>
+          </div>
+          <div class="nav-group">
+            <button class="nav-item nav-parent" data-page="clients">
+              <span class="nav-icon">👥</span>
+              <span class="nav-text">Client Center</span>
+              <span class="nav-caret">▾</span>
+            </button>
+            <div class="nav-children">
+              <button class="nav-subitem" data-page="client-list">Client List</button>
+              <button class="nav-subitem" data-page="client-settings">Client Settings</button>
+            </div>
+          </div>
+          <div class="nav-group">
+            <button class="nav-item nav-parent" data-page="suppliers">
+              <span class="nav-icon">🏢</span>
+              <span class="nav-text">Supplier Center</span>
+              <span class="nav-caret">▾</span>
+            </button>
+            <div class="nav-children">
+              <button class="nav-subitem" data-page="supplier-list">Supplier List</button>
+              <button class="nav-subitem" data-page="supplier-route">Supplier Route</button>
+            </div>
+          </div>
+          <div class="nav-group">
+            <button class="nav-item nav-parent" data-page="system">
+              <span class="nav-icon">🖥</span>
+              <span class="nav-text">System</span>
+              <span class="nav-caret">▾</span>
+            </button>
+            <div class="nav-children">
+              <button class="nav-subitem" data-page="system-health">System Health</button>
+              <button class="nav-subitem" data-page="audit-trail">Audit Trail</button>
+            </div>
+          </div>
+          <div class="nav-group">
+            <button class="nav-item nav-parent" data-page="rcs">
+              <span class="nav-icon">R</span>
+              <span class="nav-text">Rcs</span>
+              <span class="nav-caret">▾</span>
+            </button>
+            <div class="nav-children">
+              <button class="nav-subitem" data-page="rcs-campaign">Campaign</button>
+              <button class="nav-subitem" data-page="rcs-template">Template</button>
+              <button class="nav-subitem" data-page="rcs-report">Rcs Report</button>
+            </div>
+          </div>
+        </nav>
+      </aside>
 
-        <div class="user-pill" style="margin-left: 10px">
-          <div class="user-avatar">D</div>
-          Hi, dito
-        </div>
-      </div>
-    </div>
+      <div class="workspace">
+        <header class="app-header">
+          <div>
+            <div class="app-kicker">Operations Center</div>
+            <div class="header-title-row">
+              <button
+                class="sidebar-toggle"
+                type="button"
+                onclick="toggleSidebar()"
+                aria-label="Toggle sidebar"
+                aria-expanded="true"
+              >
+                ☰
+              </button>
+              <h1 id="pageTitle">Monitoring Overview</h1>
+            </div>
+          </div>
+          <div class="header-actions">
+            <div class="topbar-status"><span></span>LIVE</div>
+            <div class="last-updated" id="lastUpdated">Updated --:--:--</div>
+            <div class="live-clock" id="clock">--:--:--</div>
+            <div class="topbar-control">
+              <span>THEME</span>
+              <label class="dark-toggle">
+                <input
+                  type="checkbox"
+                  id="darkToggle"
+                  onchange="toggleDark(this)"
+                />
+                <div class="toggle-track">
+                  <div class="toggle-thumb" id="toggleIcon">☀️</div>
+                </div>
+              </label>
+            </div>
+            <div class="header-user">
+              <div class="header-avatar">D</div>
+              Hi, dito
+            </div>
+          </div>
+        </header>
 
+        <main class="page-content">
+          <section class="page-view active" id="page-monitoring" data-title="Monitoring Overview">
     <div class="filter-bar">
       <div class="filter-group">
         <label>Date</label>
@@ -474,6 +634,14 @@
             <div class="scroll-panel" id="supplierPerf"></div>
           </div>
         </div>
+      </div>
+    </div>
+          </section>
+
+          <section class="page-view" id="page-placeholder" data-title="Workspace">
+            <div id="pageSlot" class="page-slot"></div>
+          </section>
+        </main>
       </div>
     </div>
 

@@ -10,6 +10,86 @@ function toggleDark(el) {
 
 let highlightedTime = null;
 
+function initAppNavigation() {
+  const navItems = document.querySelectorAll("[data-page]");
+  const monitoringPage = document.getElementById("page-monitoring");
+  const placeholderPage = document.getElementById("page-placeholder");
+  const pageSlot = document.getElementById("pageSlot");
+  const pageTitle = document.getElementById("pageTitle");
+
+  const renderFallbackPage = (title) => {
+    if (!pageSlot) return;
+    pageSlot.innerHTML = `
+      <div class="module-page">
+        <div class="module-head">
+          <span>Workspace</span>
+          <h2>${title}</h2>
+          <p>File halaman belum ditemukan. Struktur shell sudah siap untuk isi tabel, chart, dan workflow production.</p>
+        </div>
+      </div>
+    `;
+  };
+
+  const loadMenuPage = async (page, title) => {
+    monitoringPage?.classList.remove("active");
+    placeholderPage?.classList.add("active");
+    if (pageTitle) pageTitle.textContent = title;
+    if (!pageSlot) return;
+
+    pageSlot.innerHTML = '<div class="page-loading">Loading page...</div>';
+    try {
+      const response = await fetch(`pages/${page}.html`, { cache: "no-store" });
+      if (!response.ok) throw new Error(`Page ${page} not found`);
+      pageSlot.innerHTML = await response.text();
+    } catch (error) {
+      renderFallbackPage(title);
+    }
+  };
+
+  navItems.forEach((item) => {
+    item.addEventListener("click", async () => {
+      const label =
+        item.querySelector(".nav-text")?.textContent.trim() ||
+        item.textContent.trim().replace(/\s+/g, " ");
+      const group = item.closest(".nav-group");
+      const isParent = item.classList.contains("nav-parent");
+      const hasChildren = !!group?.querySelector(".nav-children");
+      const wasOpen = !!group?.classList.contains("open");
+
+      navItems.forEach((nav) => nav.classList.remove("active"));
+      item.classList.add("active");
+      if (group && hasChildren) {
+        group.classList.toggle("open", !(isParent && wasOpen));
+      }
+
+      if (item.dataset.page === "monitoring") {
+        monitoringPage?.classList.add("active");
+        placeholderPage?.classList.remove("active");
+        if (pageTitle) pageTitle.textContent = "Monitoring Overview";
+        return;
+      }
+
+      monitoringPage?.classList.remove("active");
+      await loadMenuPage(item.dataset.page, label);
+    });
+  });
+}
+
+initAppNavigation();
+
+function toggleSidebar() {
+  const shell = document.querySelector(".app-shell");
+  const toggle = document.querySelector(".sidebar-toggle");
+  if (!shell) return;
+
+  const isCollapsed = shell.classList.toggle("sidebar-collapsed");
+  if (toggle) {
+    toggle.setAttribute("aria-expanded", String(!isCollapsed));
+  }
+}
+
+window.toggleSidebar = toggleSidebar;
+
 function formatClockTime(date = new Date()) {
   return date.toTimeString().slice(0, 8);
 }
