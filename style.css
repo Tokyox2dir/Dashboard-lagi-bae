@@ -2411,6 +2411,310 @@ tr.row-new { animation: row-flash 6s ease forwards; }
   white-space: pre;
 }
 
+.business-page {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.business-filter {
+  width: min(760px, 100%);
+  margin: 0 auto;
+  padding: 12px;
+  display: grid;
+  grid-template-columns: 1fr 210px 1fr;
+  gap: 10px 18px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.business-filter > input,
+.business-filter > select,
+.business-filter > button,
+.business-date-range > input {
+  min-height: 36px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface2);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  padding: 0 12px;
+}
+
+.business-filter > button {
+  grid-column: 2;
+  background: var(--accent);
+  color: #ffffff;
+  cursor: pointer;
+}
+
+.business-date-range {
+  position: relative;
+}
+
+.business-date-range input {
+  width: 100%;
+  cursor: pointer;
+}
+
+.business-date-picker {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 50%;
+  z-index: 40;
+  width: 560px;
+  padding: 12px;
+  display: none;
+  transform: translateX(-50%);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  box-shadow: 0 18px 44px rgba(15, 23, 42, 0.2);
+}
+
+.business-date-picker.active {
+  display: block;
+}
+
+.business-picker-nav {
+  display: grid;
+  grid-template-columns: 28px 28px 1fr 28px 28px;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.business-picker-nav button {
+  grid-column: auto;
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text2);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.business-picker-nav button:hover {
+  background: var(--surface2);
+  color: var(--text);
+}
+
+.business-picker-calendars {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 22px;
+}
+
+.business-picker-title {
+  margin-bottom: 14px;
+  color: var(--text);
+  font-size: 15px;
+  font-weight: 900;
+  text-align: center;
+}
+
+.business-picker-weekdays,
+.business-picker-days {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+}
+
+.business-picker-weekdays {
+  margin-bottom: 6px;
+}
+
+.business-picker-weekdays span {
+  color: var(--text2);
+  font-size: 12px;
+  font-weight: 900;
+  text-align: center;
+}
+
+.business-day {
+  grid-column: auto;
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.business-day.muted {
+  color: var(--text3);
+  opacity: 0.45;
+}
+
+.business-day.in-range {
+  background: rgba(59, 130, 246, 0.12);
+}
+
+.business-day.selected {
+  background: var(--accent);
+  color: #ffffff;
+  opacity: 1;
+}
+
+.business-top-grid {
+  display: grid;
+  grid-template-columns: 130px minmax(0, 1fr) 310px;
+  gap: 16px;
+  align-items: stretch;
+  height: 385px;
+}
+
+.business-kpis {
+  display: grid;
+  grid-template-rows: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.business-kpi,
+.business-card {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.business-kpi {
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 0;
+}
+
+.business-kpi span,
+.business-card-title {
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.7px;
+  text-transform: uppercase;
+}
+
+.business-kpi strong {
+  margin-top: 8px;
+  color: var(--text);
+  font-size: 18px;
+}
+
+.business-card {
+  min-width: 0;
+  padding: 16px;
+}
+
+.business-chart-card {
+  height: 385px;
+  min-height: 385px;
+  display: flex;
+  flex-direction: column;
+  padding-bottom: 10px;
+}
+
+.business-chart-card canvas {
+  flex: 1 1 auto;
+  display: block;
+  width: 100% !important;
+  height: 330px !important;
+  max-height: 330px;
+  margin-top: 8px;
+}
+
+.business-sender-card {
+  padding: 0;
+  overflow-x: auto;
+}
+
+.business-table {
+  width: 100%;
+  min-width: 760px;
+  border-collapse: collapse;
+}
+
+.business-table th,
+.business-table td {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+  text-align: left;
+}
+
+.business-table th {
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.7px;
+  text-transform: uppercase;
+}
+
+.business-table td {
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.business-client-analytics {
+  overflow-x: auto;
+}
+
+.business-client-analytics .client-analytics-table {
+  min-width: 1040px;
+}
+
+.business-operator-card {
+  height: 385px;
+  min-height: 385px;
+  display: flex;
+  flex-direction: column;
+}
+
+.business-operator-card .operator-grid {
+  padding: 12px 0 0;
+  gap: 8px;
+}
+
+.business-operator-card .operator-item {
+  padding: 9px 10px;
+}
+
+.business-operator-card .operator-name {
+  font-size: 12px;
+}
+
+.business-operator-card .operator-total {
+  font-size: 19px;
+}
+
+.business-operator-card .operator-legend {
+  font-size: 10px;
+}
+
+@media (max-width: 1180px) {
+  .business-top-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .business-kpis {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-rows: none;
+  }
+
+  .business-operator-card {
+    min-height: 0;
+  }
+}
+
 #page-monitoring .card-header,
 #page-monitoring .sender-table-head,
 #page-monitoring .sender-row,

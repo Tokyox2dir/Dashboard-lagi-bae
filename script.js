@@ -766,6 +766,9 @@ function initLoadedPage(page) {
   if (page === "custom-report") {
     renderCustomReportCharts();
   }
+  if (page === "business-overview") {
+    renderBusinessOverview();
+  }
 }
 
 window.initLoadedPage = initLoadedPage;
@@ -1040,6 +1043,268 @@ function updateCustomReportPeriod() {
 }
 
 window.updateCustomReportPeriod = updateCustomReportPeriod;
+
+let businessOverviewChart = null;
+let businessPickerMonth = new Date(2026, 4, 1);
+let businessPickerStart = new Date(2026, 4, 1);
+let businessPickerEnd = new Date(2026, 4, 21);
+
+function formatBusinessDate(date) {
+  return `${String(date.getDate()).padStart(2, "0")}/${String(date.getMonth() + 1).padStart(2, "0")}/${date.getFullYear()}`;
+}
+
+function parseBusinessDate(value) {
+  const [day, month, year] = String(value || "").split("/").map(Number);
+  return new Date(year, month - 1, day);
+}
+
+function sameBusinessDay(a, b) {
+  return !!a && !!b && a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+}
+
+function isBusinessDateBetween(date, start, end) {
+  if (!start || !end) return false;
+  const day = new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
+  return day >= start.getTime() && day <= end.getTime();
+}
+
+function syncBusinessDateInput() {
+  const input = document.getElementById("businessDateRange");
+  if (!input || !businessPickerStart || !businessPickerEnd) return;
+  input.value = `${formatBusinessDate(businessPickerStart)} - ${formatBusinessDate(businessPickerEnd)}`;
+}
+
+function readBusinessDateInput() {
+  const rangeValue = document.getElementById("businessDateRange")?.value || "01/05/2026 - 21/05/2026";
+  const [fromRaw, untilRaw] = rangeValue.split("-").map((value) => value.trim());
+  const fromDate = parseBusinessDate(fromRaw);
+  const untilDate = parseBusinessDate(untilRaw);
+  if (!Number.isNaN(fromDate.getTime()) && !Number.isNaN(untilDate.getTime())) {
+    businessPickerStart = fromDate;
+    businessPickerEnd = untilDate;
+    businessPickerMonth = new Date(fromDate.getFullYear(), fromDate.getMonth(), 1);
+  }
+}
+
+function renderBusinessMonth(date) {
+  const monthName = date.toLocaleDateString("en-US", { month: "short", year: "numeric" });
+  const first = new Date(date.getFullYear(), date.getMonth(), 1);
+  const start = new Date(first);
+  start.setDate(first.getDate() - first.getDay());
+  const cells = [];
+
+  for (let index = 0; index < 42; index += 1) {
+    const day = new Date(start);
+    day.setDate(start.getDate() + index);
+    const muted = day.getMonth() !== date.getMonth() ? " muted" : "";
+    const selected = sameBusinessDay(day, businessPickerStart) || sameBusinessDay(day, businessPickerEnd) ? " selected" : "";
+    const inRange = isBusinessDateBetween(day, businessPickerStart, businessPickerEnd) ? " in-range" : "";
+    cells.push(`<button type="button" class="business-day${muted}${selected}${inRange}" data-date="${formatBusinessDate(day)}">${day.getDate()}</button>`);
+  }
+
+  return `
+    <div class="business-picker-month">
+      <div class="business-picker-title">${monthName}</div>
+      <div class="business-picker-weekdays">
+        <span>Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span>
+      </div>
+      <div class="business-picker-days">${cells.join("")}</div>
+    </div>
+  `;
+}
+
+function renderBusinessDatePicker() {
+  const picker = document.getElementById("businessDatePicker");
+  if (!picker) return;
+  const nextMonth = new Date(businessPickerMonth.getFullYear(), businessPickerMonth.getMonth() + 1, 1);
+  picker.innerHTML = `
+    <div class="business-picker-nav">
+      <button type="button" data-picker-nav="-12">&laquo;</button>
+      <button type="button" data-picker-nav="-1">&lsaquo;</button>
+      <span></span>
+      <button type="button" data-picker-nav="1">&rsaquo;</button>
+      <button type="button" data-picker-nav="12">&raquo;</button>
+    </div>
+    <div class="business-picker-calendars">
+      ${renderBusinessMonth(businessPickerMonth)}
+      ${renderBusinessMonth(nextMonth)}
+    </div>
+  `;
+}
+
+function initBusinessDateRangePicker() {
+  const input = document.getElementById("businessDateRange");
+  const picker = document.getElementById("businessDatePicker");
+  if (!input || !picker || input.dataset.bound === "true") return;
+
+  input.dataset.bound = "true";
+  readBusinessDateInput();
+  renderBusinessDatePicker();
+
+  input.addEventListener("click", () => {
+    readBusinessDateInput();
+    renderBusinessDatePicker();
+    picker.classList.toggle("active");
+  });
+
+  picker.addEventListener("click", (event) => {
+    const nav = event.target.closest("[data-picker-nav]");
+    const day = event.target.closest("[data-date]");
+
+    if (nav) {
+      businessPickerMonth = new Date(businessPickerMonth.getFullYear(), businessPickerMonth.getMonth() + Number(nav.dataset.pickerNav), 1);
+      renderBusinessDatePicker();
+      return;
+    }
+
+    if (!day) return;
+    const selectedDate = parseBusinessDate(day.dataset.date);
+    if (!businessPickerStart || (businessPickerStart && businessPickerEnd)) {
+      businessPickerStart = selectedDate;
+      businessPickerEnd = null;
+      renderBusinessDatePicker();
+      return;
+    }
+
+    businessPickerEnd = selectedDate;
+    if (businessPickerEnd < businessPickerStart) {
+      [businessPickerStart, businessPickerEnd] = [businessPickerEnd, businessPickerStart];
+    }
+    syncBusinessDateInput();
+    renderBusinessDatePicker();
+    picker.classList.remove("active");
+    renderBusinessOverview();
+  });
+
+  document.addEventListener("click", (event) => {
+    if (!picker.classList.contains("active")) return;
+    if (event.target === input || picker.contains(event.target)) return;
+    picker.classList.remove("active");
+  });
+}
+
+function getBusinessDateLabels() {
+  const rangeValue = document.getElementById("businessDateRange")?.value || "01/05/2026 - 21/05/2026";
+  const [fromRaw, untilRaw] = rangeValue.split("-").map((value) => value.trim());
+  const fromDate = parseBusinessDate(fromRaw);
+  const untilDate = parseBusinessDate(untilRaw);
+  const labels = [];
+
+  if (Number.isNaN(fromDate.getTime()) || Number.isNaN(untilDate.getTime()) || fromDate > untilDate) {
+    return Array.from({ length: 21 }, (_, index) => `${index + 1} May`);
+  }
+
+  const cursor = new Date(fromDate);
+  while (cursor <= untilDate && labels.length < 45) {
+    labels.push(cursor.toLocaleDateString("en-GB", { day: "numeric", month: "short" }));
+    cursor.setDate(cursor.getDate() + 1);
+  }
+
+  return labels;
+}
+
+function createBusinessTrafficSeries(labels) {
+  return labels.reduce(
+    (series, _, index) => {
+      const wave = Math.sin(index / 2.7) * 5;
+      const delivered = Math.round(78 + wave + (index % 6 === 0 ? -5 : 4));
+      const sent = Math.round(7 + Math.sin(index / 3.3) * 2 + (index % 8 === 0 ? 1 : 0));
+      const undelivered = Math.max(2, 100 - delivered - sent);
+
+      series.sent.push(sent);
+      series.delivered.push(Math.min(92, Math.max(64, delivered)));
+      series.undelivered.push(Math.min(28, undelivered));
+      return series;
+    },
+    { sent: [], delivered: [], undelivered: [] },
+  );
+}
+
+function renderBusinessOverview() {
+  initBusinessDateRangePicker();
+  const canvas = document.getElementById("businessOverviewChart");
+  if (canvas && typeof Chart !== "undefined") {
+    if (businessOverviewChart) {
+      businessOverviewChart.destroy();
+      businessOverviewChart = null;
+    }
+
+    const labels = getBusinessDateLabels();
+    const traffic = createBusinessTrafficSeries(labels);
+
+    businessOverviewChart = new Chart(canvas, {
+      type: "line",
+      data: {
+        labels,
+        datasets: [
+          {
+            label: "Sent",
+            data: traffic.sent,
+            borderColor: "#f59e0b",
+            backgroundColor: "rgba(245,158,11,0.12)",
+            borderWidth: 3,
+            pointRadius: 3,
+            tension: 0.32,
+          },
+          {
+            label: "Delivered",
+            data: traffic.delivered,
+            borderColor: "#22c55e",
+            backgroundColor: "rgba(34,197,94,0.12)",
+            borderWidth: 3,
+            pointRadius: 3,
+            tension: 0.32,
+            fill: true,
+          },
+          {
+            label: "Undelivered",
+            data: traffic.undelivered,
+            borderColor: "#ef4444",
+            backgroundColor: "rgba(239,68,68,0.08)",
+            borderWidth: 3,
+            pointRadius: 3,
+            tension: 0.32,
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        layout: {
+          padding: { top: 0, right: 4, bottom: 0, left: 0 },
+        },
+        plugins: {
+          legend: {
+            labels: { color: getComputedStyle(document.documentElement).getPropertyValue("--text").trim(), font: { weight: "800" } },
+          },
+        },
+        scales: {
+          x: {
+            grid: { color: "rgba(100,116,139,0.18)" },
+            ticks: {
+              color: getComputedStyle(document.documentElement).getPropertyValue("--text").trim(),
+              maxRotation: 45,
+              minRotation: 45,
+            },
+          },
+          y: {
+            beginAtZero: true,
+            max: 100,
+            grid: { color: "rgba(100,116,139,0.18)" },
+            ticks: {
+              color: getComputedStyle(document.documentElement).getPropertyValue("--text").trim(),
+              callback: (value) => `${value}%`,
+            },
+          },
+        },
+      },
+    });
+  }
+
+  renderOperators();
+}
+
+window.renderBusinessOverview = renderBusinessOverview;
 
 function downloadTableCsv(tableId, filename = "export.csv") {
   const table = document.getElementById(tableId);
@@ -1533,8 +1798,8 @@ const operators = [
   { name: "INDOSAT", total: 9210, delivered: 69, sent: 20, undeliv: 11 },
   { name: "XL", total: 6780, delivered: 74, sent: 15, undeliv: 11 },
 ];
-const opGrid = document.getElementById("operatorGrid");
-function renderOperators() {
+
+function renderOperatorGrid(opGrid) {
   if (!opGrid) return;
   opGrid.innerHTML = "";
   const filters = getActiveFilters();
@@ -1565,6 +1830,12 @@ function renderOperators() {
       </div>
     `;
     opGrid.appendChild(el);
+  });
+}
+
+function renderOperators() {
+  ["operatorGrid", "businessOperatorGrid"].forEach((id) => {
+    renderOperatorGrid(document.getElementById(id));
   });
 }
 renderOperators();

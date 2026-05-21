@@ -1,56 +1,84 @@
-<div class="module-page">
-  <div class="module-head">
-    <span>Overview</span>
-    <h2>Business Overview</h2>
-    <p>Ringkasan bisnis untuk traffic, revenue signal, account activity, dan performa operasional.</p>
-  </div>
-  <div class="module-grid">
-    <div class="module-card">
-      <span>Today Traffic</span>
-      <strong>184K</strong>
-      <small>Total message volume</small>
+<div class="business-page">
+  <section class="business-filter">
+    <select aria-label="Nama client">
+      <option>All Client</option>
+      <option>GOT_OTP</option>
+      <option>YULORE_HTTP</option>
+      <option>SF_A2P_2</option>
+      <option>OMNI_WAGEN</option>
+      <option>Cashcepat</option>
+      <option>SINGA.ID</option>
+    </select>
+    <div class="business-date-range">
+      <input type="text" id="businessDateRange" value="01/05/2026 - 21/05/2026" aria-label="Date Range" readonly />
+      <div class="business-date-picker" id="businessDatePicker"></div>
     </div>
-    <div class="module-card">
-      <span>Active Client</span>
-      <strong>39</strong>
-      <small>Sending traffic today</small>
+    <input type="text" value="All SenderID" aria-label="SenderID" />
+    <button type="button" onclick="renderBusinessOverview()">Search</button>
+  </section>
+
+  <section class="business-top-grid">
+    <div class="business-kpis">
+      <div class="business-kpi"><span>Margin</span><strong>Rp 18.4M</strong></div>
+      <div class="business-kpi"><span>Revenue</span><strong>Rp 62.7M</strong></div>
+      <div class="business-kpi"><span>Cost</span><strong>Rp 44.3M</strong></div>
     </div>
-    <div class="module-card">
-      <span>Delivery Health</span>
-      <strong>82%</strong>
-      <small>Weighted delivered rate</small>
+
+    <div class="business-card business-chart-card">
+      <div class="business-card-title">Traffic Per Day</div>
+      <canvas id="businessOverviewChart"></canvas>
     </div>
-  </div>
-  <div class="module-table-wrap">
-    <table class="module-table">
+
+    <div class="business-card business-operator-card">
+      <div class="business-card-title">Operator Performance</div>
+      <div class="operator-grid" id="businessOperatorGrid"></div>
+    </div>
+  </section>
+
+  <section class="business-card business-sender-card">
+    <table class="business-table">
       <thead>
         <tr>
-          <th>Segment</th>
-          <th>Traffic</th>
-          <th>Delivered</th>
-          <th>Trend</th>
+          <th>Sender</th>
+          <th>Success Rate</th>
+          <th>Submission</th>
+          <th>Undelivered</th>
         </tr>
       </thead>
       <tbody>
-        <tr>
-          <td>Enterprise</td>
-          <td>92,440</td>
-          <td>84%</td>
-          <td><span class="module-pill">Up</span></td>
-        </tr>
-        <tr>
-          <td>Finance</td>
-          <td>48,210</td>
-          <td>81%</td>
-          <td><span class="module-pill">Stable</span></td>
-        </tr>
-        <tr>
-          <td>Marketplace</td>
-          <td>43,880</td>
-          <td>79%</td>
-          <td><span class="module-pill">Watch</span></td>
-        </tr>
+        <tr><td>SINGA.ID</td><td>88%</td><td>26,940</td><td>2,830</td></tr>
+        <tr><td>UangMe</td><td>82%</td><td>18,420</td><td>3,315</td></tr>
+        <tr><td>Bukalapak</td><td>79%</td><td>15,680</td><td>3,292</td></tr>
+        <tr><td>Cashcepat</td><td>86%</td><td>12,930</td><td>1,810</td></tr>
+        <tr><td>wagen</td><td>80%</td><td>11,220</td><td>2,244</td></tr>
       </tbody>
     </table>
-  </div>
+  </section>
+
+  <section class="business-card business-client-analytics">
+    <div class="business-card-title">Client Analytics</div>
+    <table class="client-analytics-table">
+      <thead>
+        <tr>
+          <th>Client</th>
+          <th>Sender</th>
+          <th>Telco</th>
+          <th>Today</th>
+          <th>1 Day Before</th>
+          <th>7 Day Before</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="client-analytics-section growth"><td colspan="7">Growth</td></tr>
+        <tr class="growth-row high"><td>Cashcepat</td><td>OTP</td><td>Indosat</td><td>12,400</td><td>10,900 <span class="growth-badge">+1,500 (+13.8%)</span></td><td>9,800 <span class="growth-badge">+2,600 (+26.5%)</span></td><td><span class="growth-status high">High Growth</span></td></tr>
+        <tr class="growth-row medium"><td>RupiahCepat</td><td>Reminder</td><td>Telkomsel</td><td>9,250</td><td>8,700 <span class="growth-badge">+550 (+6.3%)</span></td><td>8,110 <span class="growth-badge">+1,140 (+14.1%)</span></td><td><span class="growth-status medium">Medium Growth</span></td></tr>
+        <tr class="growth-row low"><td>SINGA.ID</td><td>Login OTP</td><td>XL</td><td>6,840</td><td>6,620 <span class="growth-badge">+220 (+3.3%)</span></td><td>6,700 <span class="growth-badge">+140 (+2.1%)</span></td><td><span class="growth-status low">Low Growth</span></td></tr>
+        <tr class="client-analytics-section drop"><td colspan="7">Drop</td></tr>
+        <tr class="drop-row high"><td>GOT_OTP</td><td>Bukalapak</td><td>Indosat</td><td>8,700</td><td>9,950 <span class="drop-badge">-1,250 (-12.6%)</span></td><td>10,600 <span class="drop-badge">-1,900 (-17.9%)</span></td><td><span class="drop-status high">High Drop</span></td></tr>
+        <tr class="drop-row low"><td>OMNI_WAGEN</td><td>BRI-NOTIF</td><td>Telkomsel</td><td>5,880</td><td>6,020 <span class="drop-badge">-140 (-2.3%)</span></td><td>5,940 <span class="drop-badge">-60 (-1.0%)</span></td><td><span class="drop-status low">Low Drop</span></td></tr>
+        <tr class="drop-row medium"><td>SF_A2P_2</td><td>UangMe</td><td>XL</td><td>7,420</td><td>8,010 <span class="drop-badge">-590 (-7.4%)</span></td><td>7,880 <span class="drop-badge">-460 (-5.8%)</span></td><td><span class="drop-status medium">Medium Drop</span></td></tr>
+      </tbody>
+    </table>
+  </section>
 </div>
