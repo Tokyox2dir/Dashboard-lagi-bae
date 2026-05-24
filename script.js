@@ -1257,10 +1257,10 @@ function exportSupplierReadinessExcel(groups) {
           h2 { margin: 0 0 6px; }
           .meta { margin: 0 0 14px; color: #475569; font-size: 12px; }
           table { border-collapse: collapse; width: 100%; }
-          th, td { border: 1px solid #94a3b8; padding: 8px 10px; text-align: center; vertical-align: top; }
+          th, td { border: 1px solid #94a3b8; padding: 8px 10px; text-align: center; vertical-align: top; color: #000000; }
           th { background: #1f2937; color: #ffffff; font-weight: 700; }
           td:nth-child(2) { text-align: left; font-weight: 700; }
-          .supplier { display: inline-block; margin: 1px 2px; padding: 3px 8px; border-radius: 10px; background: #6d28d9; color: #ffffff; font-weight: 700; }
+          .supplier { display: inline-block; margin: 1px 2px; padding: 3px 8px; border-radius: 10px; background: #e0e7ff; color: #000000; font-weight: 700; }
         </style>
       </head>
       <body>
