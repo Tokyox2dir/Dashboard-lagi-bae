@@ -1030,6 +1030,69 @@ function renderSidReadinessRows(groups) {
   if (status) status.textContent = `${groups.length.toLocaleString("en-US")} unique Sender ID shown`;
 }
 
+function exportSidReadinessExcel(groups) {
+  const rows = groups.map((group, index) => {
+    const statusCells = senderDbOperators
+      .map((operator) => {
+        const ready = group.operators.get(operator)?.size > 0;
+        return `<td class="${ready ? "ready" : "not-ready"}">${ready ? "Ready" : "Not Ready"}</td>`;
+      })
+      .join("");
+    return `<tr><td>${index + 1}</td><td>${escapeHtml(group.senderId)}</td>${statusCells}</tr>`;
+  });
+  const generatedAt = new Date().toLocaleString("id-ID");
+  const html = `
+    <html>
+      <head>
+        <meta charset="UTF-8" />
+        <style>
+          body { font-family: Arial, sans-serif; }
+          h2 { margin: 0 0 6px; }
+          .meta { margin: 0 0 14px; color: #475569; font-size: 12px; }
+          table { border-collapse: collapse; width: 100%; }
+          th, td { border: 1px solid #94a3b8; padding: 8px 10px; text-align: center; white-space: nowrap; }
+          th { background: #1f2937; color: #ffffff; font-weight: 700; }
+          td:nth-child(2) { text-align: left; font-weight: 700; }
+          .ready { background: #bbf7d0; color: #166534; font-weight: 700; }
+          .not-ready { background: #fecaca; color: #991b1b; font-weight: 700; }
+        </style>
+      </head>
+      <body>
+        <h2>SID Readiness</h2>
+        <p class="meta">${groups.length.toLocaleString("en-US")} sender exported - ${generatedAt}</p>
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Sender ID</th>
+              ${senderDbOperators.map((operator) => `<th>${escapeHtml(operator)}</th>`).join("")}
+            </tr>
+          </thead>
+          <tbody>${rows.join("") || `<tr><td colspan="${senderDbOperators.length + 2}">No readiness data found</td></tr>`}</tbody>
+        </table>
+      </body>
+    </html>
+  `;
+  const blob = new Blob([html], { type: "application/vnd.ms-excel;charset=utf-8" });
+  const filename = `sid-readiness-${new Date().toISOString().slice(0, 10)}.xls`;
+  if (window.navigator?.msSaveOrOpenBlob) {
+    window.navigator.msSaveOrOpenBlob(blob, filename);
+    return;
+  }
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  link.rel = "noopener";
+  link.style.display = "none";
+  document.body.appendChild(link);
+  link.click();
+  setTimeout(() => {
+    link.remove();
+    URL.revokeObjectURL(url);
+  }, 250);
+}
+
 function renderSupplierReadinessRows(groups) {
   const tbody = document.getElementById("supplierReadyTbody");
   const status = document.getElementById("supplierReadyStatus");
@@ -1062,9 +1125,12 @@ function initSidReadiness() {
   senderDbReadyCallbacks.push(() => {
     const groups = buildSenderReadinessGroups();
     fillReadinessCategorySelect("sidReadyCategory", groups);
-    const render = () => renderSidReadinessRows(filterReadinessGroups(groups, "sidReadySearch", "sidReadyCategory"));
+    const getFilteredGroups = () => filterReadinessGroups(groups, "sidReadySearch", "sidReadyCategory");
+    const render = () => renderSidReadinessRows(getFilteredGroups());
     document.getElementById("sidReadySearch")?.addEventListener("input", render);
     document.getElementById("sidReadyCategory")?.addEventListener("change", render);
+    const exportButton = document.getElementById("sidReadyExport");
+    if (exportButton) exportButton.onclick = () => exportSidReadinessExcel(getFilteredGroups());
     render();
   });
   loadSenderDatabase();
