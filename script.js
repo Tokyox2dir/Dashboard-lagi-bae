@@ -1002,6 +1002,9 @@ function initLoadedPage(page) {
   if (page === "readiness-supplier") {
     initSupplierReadiness();
   }
+  if (page === "quotation") {
+    initQuotationPage();
+  }
 }
 
 window.initLoadedPage = initLoadedPage;
@@ -1074,6 +1077,219 @@ function saveUserDetail() {
 }
 
 window.saveUserDetail = saveUserDetail;
+
+const quotationOperators = ["Tsel", "Indosat", "Three", "XL", "Smartfren"];
+let quotationRecords = [
+  { name: "GOT_OTP", type: "Client", currency: "IDR", prices: { Tsel: 480, Indosat: 540, Three: 590, XL: 650, Smartfren: 575 }, effectiveDate: "2025-10-26" },
+  { name: "SF_A2P", type: "Client", currency: "IDR", prices: { Tsel: 450, Indosat: 520, Three: 560, XL: 610, Smartfren: 545 }, effectiveDate: "2025-10-26" },
+  { name: "GPI_INT", type: "Supplier", currency: "USD", prices: { Tsel: 0.033, Indosat: 0.031, Three: 0.029, XL: 0.034, Smartfren: 0.032 }, effectiveDate: "2025-10-26" },
+  { name: "Sahridaya_Dom", type: "Client", currency: "IDR", prices: { Tsel: 430, Indosat: 500, Three: 525, XL: 590, Smartfren: 510 }, effectiveDate: "2025-10-26" },
+];
+let quotationHistory = {
+  GOT_OTP: [
+    { date: "2025-06-01", currency: "IDR", prices: { Tsel: 455, Indosat: 510, Three: 560, XL: 620, Smartfren: 545 } },
+    { date: "2025-08-15", currency: "IDR", prices: { Tsel: 470, Indosat: 525, Three: 575, XL: 635, Smartfren: 560 } },
+  ],
+  SF_A2P: [{ date: "2025-07-10", currency: "IDR", prices: { Tsel: 420, Indosat: 500, Three: 540, XL: 585, Smartfren: 520 } }],
+  GPI_INT: [{ date: "2025-09-01", currency: "USD", prices: { Tsel: 0.031, Indosat: 0.03, Three: 0.028, XL: 0.032, Smartfren: 0.031 } }],
+  Sahridaya_Dom: [{ date: "2025-07-01", currency: "IDR", prices: { Tsel: 405, Indosat: 480, Three: 500, XL: 565, Smartfren: 490 } }],
+};
+
+function formatQuotationPrice(value, currency = "IDR") {
+  if (currency === "USD") return Number(value).toFixed(3);
+  return Number(value).toLocaleString("en-US");
+}
+
+function renderQuotationList() {
+  const list = document.getElementById("quotationList");
+  if (!list) return;
+  const filter = document.getElementById("quotationFilter")?.value || "All Client";
+  const rows = quotationRecords.filter((record) => filter === "All Client" || record.name === filter);
+  list.innerHTML = rows
+    .map(
+      (record) => `
+        <div class="quotation-row">
+          <div>
+            <strong>${escapeHtml(record.name)}</strong>
+            <small>${escapeHtml(record.type)} - ${escapeHtml(record.currency)}</small>
+          </div>
+          <div class="quotation-actions">
+            <button type="button" onclick="openQuotationDetail('${escapeHtml(record.name)}', 'view')">View</button>
+            <button type="button" onclick="openQuotationDetail('${escapeHtml(record.name)}', 'edit')">Edit</button>
+            <button type="button" class="danger" onclick="deleteQuotationRecord('${escapeHtml(record.name)}')">Delete</button>
+          </div>
+        </div>
+      `,
+    )
+    .join("");
+}
+
+function openQuotationDetail(name, mode = "view") {
+  closeQuotationModal();
+  const record = quotationRecords.find((item) => item.name === name);
+  if (!record) return;
+  const readonly = mode === "view";
+  const modal = document.createElement("div");
+  modal.className = "quotation-modal";
+  modal.id = "quotationModal";
+  modal.innerHTML = `
+    <div class="quotation-modal-panel" role="dialog" aria-modal="true" aria-label="${readonly ? "View" : "Edit"} Quotation">
+      <div class="quotation-detail-head">
+        <div>
+          <span>${readonly ? "View" : "Edit"} Quotation</span>
+          <h3>${escapeHtml(record.name)}</h3>
+        </div>
+        <div class="quotation-detail-actions">
+          ${
+            readonly
+              ? ""
+              : `<button type="button" onclick="downloadQuotationTemplate('${escapeHtml(record.name)}')">Template</button>
+                  <button type="button" onclick="document.getElementById('quotationImportInput')?.click()">Import</button>
+                  <button type="button" class="primary" onclick="submitQuotationEdit('${escapeHtml(record.name)}')">Submit</button>`
+          }
+          <button type="button" onclick="closeQuotationModal()">Close</button>
+        </div>
+      </div>
+      <div class="quotation-modal-body">
+        <div class="quotation-meta-grid">
+          <label>Currency
+            <select id="quotationCurrency" ${readonly ? "disabled" : ""}>
+              <option value="IDR" ${record.currency === "IDR" ? "selected" : ""}>IDR</option>
+              <option value="USD" ${record.currency === "USD" ? "selected" : ""}>USD</option>
+              <option value="JPY" ${record.currency === "JPY" ? "selected" : ""}>JPY</option>
+            </select>
+          </label>
+          <label>Effective Date
+            <input type="date" id="quotationEffectiveDate" value="${escapeHtml(record.effectiveDate)}" ${readonly ? "disabled" : ""} />
+          </label>
+        </div>
+        <table class="quotation-price-table">
+          <thead><tr><th>Operator</th><th>Price</th><th>Effective Date</th><th>${readonly ? "Currency" : "Action"}</th></tr></thead>
+          <tbody>
+            ${quotationOperators
+              .map(
+                (operator) => `
+                  <tr>
+                    <td>${escapeHtml(operator)}</td>
+                    <td>
+                      ${
+                        readonly
+                          ? formatQuotationPrice(record.prices[operator], record.currency)
+                          : `<input type="number" step="0.001" data-quotation-price="${escapeHtml(operator)}" value="${record.prices[operator]}" />`
+                      }
+                    </td>
+                    <td>${escapeHtml(record.effectiveDate)}</td>
+                    <td>${readonly ? escapeHtml(record.currency) : `<button type="button" onclick="clearQuotationOperator('${escapeHtml(operator)}')">Delete</button>`}</td>
+                  </tr>
+                `,
+              )
+              .join("")}
+          </tbody>
+        </table>
+        <div class="quotation-history">
+          <h4>Price History</h4>
+          <table class="quotation-history-table">
+            <thead><tr><th>Date</th><th>Currency</th>${quotationOperators.map((operator) => `<th>${escapeHtml(operator)}</th>`).join("")}</tr></thead>
+            <tbody>
+              ${(quotationHistory[name] || [])
+                .map(
+                  (history) => `
+                    <tr>
+                      <td>${escapeHtml(history.date)}</td>
+                      <td>${escapeHtml(history.currency)}</td>
+                      ${quotationOperators.map((operator) => `<td>${formatQuotationPrice(history.prices[operator], history.currency)}</td>`).join("")}
+                    </tr>
+                  `,
+                )
+                .join("") || `<tr><td colspan="${quotationOperators.length + 2}">No history yet</td></tr>`}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+  modal.addEventListener("click", (event) => {
+    if (event.target === modal) closeQuotationModal();
+  });
+  const importer = document.getElementById("quotationImportInput");
+  if (importer) {
+    importer.onchange = (event) => importQuotationCsv(name, event.target.files?.[0]);
+  }
+}
+
+function closeQuotationModal() {
+  document.getElementById("quotationModal")?.remove();
+}
+
+function clearQuotationOperator(operator) {
+  const input = document.querySelector(`[data-quotation-price="${operator}"]`);
+  if (input) input.value = "";
+}
+
+function submitQuotationEdit(name) {
+  const record = quotationRecords.find((item) => item.name === name);
+  if (!record) return;
+  quotationHistory[name] = quotationHistory[name] || [];
+  quotationHistory[name].unshift({ date: record.effectiveDate, currency: record.currency, prices: { ...record.prices } });
+  record.currency = document.getElementById("quotationCurrency")?.value || record.currency;
+  record.effectiveDate = document.getElementById("quotationEffectiveDate")?.value || record.effectiveDate;
+  quotationOperators.forEach((operator) => {
+    const input = document.querySelector(`[data-quotation-price="${operator}"]`);
+    if (input?.value !== "") record.prices[operator] = Number(input.value);
+  });
+  openQuotationDetail(name, "edit");
+  renderQuotationList();
+}
+
+function deleteQuotationRecord(name) {
+  quotationRecords = quotationRecords.filter((record) => record.name !== name);
+  closeQuotationModal();
+  renderQuotationList();
+}
+
+function downloadQuotationTemplate(name) {
+  const rows = ["operator,price,currency,effective_date", ...quotationOperators.map((operator) => `${operator},,IDR,2025-10-26`)];
+  const blob = new Blob([rows.join("\n")], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `${name}-quotation-template.csv`;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
+
+function importQuotationCsv(name, file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    const lines = String(reader.result || "").split(/\r?\n/).filter(Boolean);
+    const record = quotationRecords.find((item) => item.name === name);
+    if (!record) return;
+    lines.slice(1).forEach((line) => {
+      const [operator, price, currency, effectiveDate] = line.split(",").map((item) => item?.trim());
+      if (quotationOperators.includes(operator) && price) record.prices[operator] = Number(price);
+      if (currency) record.currency = currency;
+      if (effectiveDate) record.effectiveDate = effectiveDate;
+    });
+    openQuotationDetail(name, "edit");
+  };
+  reader.readAsText(file);
+}
+
+function initQuotationPage() {
+  renderQuotationList();
+}
+
+window.renderQuotationList = renderQuotationList;
+window.openQuotationDetail = openQuotationDetail;
+window.submitQuotationEdit = submitQuotationEdit;
+window.deleteQuotationRecord = deleteQuotationRecord;
+window.downloadQuotationTemplate = downloadQuotationTemplate;
+window.clearQuotationOperator = clearQuotationOperator;
+window.closeQuotationModal = closeQuotationModal;
 
 let senderDbRows = [];
 let senderDbFilteredRows = [];
