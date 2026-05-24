@@ -927,6 +927,130 @@ function bindSenderDbControls() {
     senderDbPage += 1;
     renderSenderDbRows();
   });
+  document.getElementById("openSenderDbAdd")?.addEventListener("click", openSenderDbAddModal);
+}
+
+function parseSenderInput(value) {
+  return [...new Set(
+    String(value || "")
+      .split(/[\n,;]+/)
+      .map((item) => item.trim())
+      .filter(Boolean),
+  )];
+}
+
+function getCheckedValues(container) {
+  return [...container.querySelectorAll("input[type='checkbox']:checked")].map((input) => input.value);
+}
+
+function openSenderDbAddModal() {
+  document.getElementById("senderDbAddModal")?.remove();
+  const suppliers = uniqueSenderDbValues("supplierName");
+  const modal = document.createElement("div");
+  modal.className = "sender-db-modal";
+  modal.id = "senderDbAddModal";
+  modal.innerHTML = `
+    <div class="sender-db-modal-panel">
+      <div class="sender-db-modal-head">
+        <div>
+          <span>Sender Database</span>
+          <h3>Add Sender ID</h3>
+        </div>
+        <button type="button" class="sender-db-modal-close" id="closeSenderDbAdd">Close</button>
+      </div>
+      <div class="sender-db-add-grid">
+        <div class="sender-operator-inputs">
+          ${senderDbOperators
+            .map(
+              (operator) => `
+                <label>
+                  <span>${escapeHtml(operator)}</span>
+                  <textarea data-operator="${escapeHtml(operator)}" placeholder="Contoh: Akulaku&#10;Pinjamin"></textarea>
+                </label>
+              `,
+            )
+            .join("")}
+        </div>
+        <div class="sender-db-add-side">
+          <div class="sender-db-add-box">
+            <strong>Supplier</strong>
+            <div class="sender-db-checks" id="senderAddSuppliers">
+              ${suppliers
+                .map(
+                  (supplier) => `
+                    <label><input type="checkbox" value="${escapeHtml(supplier)}" /> ${escapeHtml(supplier)}</label>
+                  `,
+                )
+                .join("")}
+            </div>
+          </div>
+          <div class="sender-db-add-box">
+            <strong>Content</strong>
+            <div class="sender-db-checks" id="senderAddContents">
+              <label><input type="checkbox" value="OTP" checked /> OTP</label>
+              <label><input type="checkbox" value="MKT" checked /> MKT</label>
+            </div>
+          </div>
+          <label class="sender-db-field">
+            <span>Category</span>
+            <select id="senderAddCategory">
+              <option value="Domestic">Domestic</option>
+              <option value="International">International</option>
+            </select>
+          </label>
+          <button type="button" class="sender-db-submit" id="submitSenderDbAdd">Submit</button>
+          <p class="sender-db-add-note" id="senderAddNote">Isi sender di operator yang ready saja.</p>
+        </div>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+  document.getElementById("closeSenderDbAdd")?.addEventListener("click", closeSenderDbAddModal);
+  modal.addEventListener("click", (event) => {
+    if (event.target === modal) closeSenderDbAddModal();
+  });
+  document.getElementById("submitSenderDbAdd")?.addEventListener("click", submitSenderDbAdd);
+}
+
+function closeSenderDbAddModal() {
+  document.getElementById("senderDbAddModal")?.remove();
+}
+
+function submitSenderDbAdd() {
+  const modal = document.getElementById("senderDbAddModal");
+  if (!modal) return;
+  const suppliers = getCheckedValues(document.getElementById("senderAddSuppliers"));
+  const contents = getCheckedValues(document.getElementById("senderAddContents"));
+  const category = document.getElementById("senderAddCategory")?.value || "Domestic";
+  const note = document.getElementById("senderAddNote");
+
+  if (!suppliers.length || !contents.length) {
+    if (note) note.textContent = "Pilih minimal 1 supplier dan 1 content.";
+    return;
+  }
+
+  const content = contents.join(", ");
+  const newRows = [];
+  modal.querySelectorAll("[data-operator]").forEach((textarea) => {
+    const operator = textarea.dataset.operator;
+    parseSenderInput(textarea.value).forEach((senderId) => {
+      suppliers.forEach((supplierName) => {
+        newRows.push({ senderId, supplierName, category, operator, content });
+      });
+    });
+  });
+
+  if (!newRows.length) {
+    if (note) note.textContent = "Isi minimal 1 sender ID di salah satu operator.";
+    return;
+  }
+
+  senderDbRows = [...newRows, ...senderDbRows];
+  if (Array.isArray(window.SENDER_ID_DATABASE)) window.SENDER_ID_DATABASE.unshift(...newRows);
+  hydrateSenderDbFilters();
+  updateSenderDbStats();
+  refreshSenderDbTable(true);
+  closeSenderDbAddModal();
 }
 
 function loadSenderDatabase() {
