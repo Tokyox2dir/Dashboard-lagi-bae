@@ -1756,13 +1756,15 @@ function createBusinessTrafficSeries(labels) {
       const delivered = Math.round(78 + wave + (index % 6 === 0 ? -5 : 4));
       const sent = Math.round(7 + Math.sin(index / 3.3) * 2 + (index % 8 === 0 ? 1 : 0));
       const undelivered = Math.max(2, 100 - delivered - sent);
+      const trafficCount = Math.round(175000 + index * 4200 + Math.sin(index / 1.55) * 26000 + (index % 7 === 0 ? 18000 : 0));
 
       series.sent.push(sent);
       series.delivered.push(Math.min(92, Math.max(64, delivered)));
       series.undelivered.push(Math.min(28, undelivered));
+      series.traffic.push(Math.max(90000, trafficCount));
       return series;
     },
-    { sent: [], delivered: [], undelivered: [] },
+    { sent: [], delivered: [], undelivered: [], traffic: [] },
   );
 }
 
@@ -1777,39 +1779,61 @@ function renderBusinessOverview() {
 
     const labels = getBusinessDateLabels();
     const traffic = createBusinessTrafficSeries(labels);
+    const businessTextColor = document.documentElement.dataset.theme === "dark" ? "#f8fafc" : "#0f172a";
+    const businessMutedColor = document.documentElement.dataset.theme === "dark" ? "#cbd5e1" : "#334155";
 
     businessOverviewChart = new Chart(canvas, {
-      type: "line",
+      type: "bar",
       data: {
         labels,
         datasets: [
           {
+            label: "Traffic",
+            type: "bar",
+            data: traffic.traffic,
+            yAxisID: "yTraffic",
+            borderColor: "#3b82f6",
+            backgroundColor: "rgba(59,130,246,0.26)",
+            borderWidth: 1,
+            borderRadius: 4,
+            order: 4,
+          },
+          {
             label: "Sent",
+            type: "line",
             data: traffic.sent,
+            yAxisID: "y",
             borderColor: "#f59e0b",
             backgroundColor: "rgba(245,158,11,0.12)",
             borderWidth: 3,
             pointRadius: 3,
             tension: 0.32,
+            order: 1,
           },
           {
             label: "Delivered",
+            type: "line",
             data: traffic.delivered,
+            yAxisID: "y",
             borderColor: "#22c55e",
             backgroundColor: "rgba(34,197,94,0.12)",
             borderWidth: 3,
             pointRadius: 3,
             tension: 0.32,
             fill: true,
+            order: 0,
           },
           {
             label: "Undelivered",
+            type: "line",
             data: traffic.undelivered,
+            yAxisID: "y",
             borderColor: "#ef4444",
             backgroundColor: "rgba(239,68,68,0.08)",
             borderWidth: 3,
             pointRadius: 3,
             tension: 0.32,
+            order: 2,
           },
         ],
       },
@@ -1821,14 +1845,29 @@ function renderBusinessOverview() {
         },
         plugins: {
           legend: {
-            labels: { color: getComputedStyle(document.documentElement).getPropertyValue("--text").trim(), font: { weight: "800" } },
+            labels: {
+              boxHeight: 11,
+              boxWidth: 30,
+              color: businessTextColor,
+              padding: 14,
+              font: { size: 13, weight: "900", family: "'JetBrains Mono', monospace" },
+            },
+          },
+          tooltip: {
+            callbacks: {
+              label: (context) =>
+                context.dataset.yAxisID === "yTraffic"
+                  ? `${context.dataset.label}: ${Number(context.raw).toLocaleString("en-US")}`
+                  : `${context.dataset.label}: ${context.raw}%`,
+            },
           },
         },
         scales: {
           x: {
             grid: { color: "rgba(100,116,139,0.18)" },
             ticks: {
-              color: getComputedStyle(document.documentElement).getPropertyValue("--text").trim(),
+              color: businessMutedColor,
+              font: { size: 11, weight: "800" },
               maxRotation: 45,
               minRotation: 45,
             },
@@ -1838,8 +1877,19 @@ function renderBusinessOverview() {
             max: 100,
             grid: { color: "rgba(100,116,139,0.18)" },
             ticks: {
-              color: getComputedStyle(document.documentElement).getPropertyValue("--text").trim(),
+              color: businessMutedColor,
+              font: { size: 11, weight: "800" },
               callback: (value) => `${value}%`,
+            },
+          },
+          yTraffic: {
+            beginAtZero: true,
+            position: "right",
+            grid: { drawOnChartArea: false },
+            ticks: {
+              color: businessMutedColor,
+              font: { size: 11, weight: "800" },
+              callback: (value) => Number(value).toLocaleString("en-US"),
             },
           },
         },
