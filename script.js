@@ -1217,6 +1217,71 @@ function exportSidReadinessExcel(groups) {
   }, 250);
 }
 
+function downloadExcelHtml(html, filename) {
+  const blob = new Blob([html], { type: "application/vnd.ms-excel;charset=utf-8" });
+  if (window.navigator?.msSaveOrOpenBlob) {
+    window.navigator.msSaveOrOpenBlob(blob, filename);
+    return;
+  }
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  link.rel = "noopener";
+  link.style.display = "none";
+  document.body.appendChild(link);
+  link.click();
+  setTimeout(() => {
+    link.remove();
+    URL.revokeObjectURL(url);
+  }, 250);
+}
+
+function exportSupplierReadinessExcel(groups) {
+  const rows = groups.map((group, index) => {
+    const supplierCells = senderDbOperators
+      .map((operator) => {
+        const suppliers = [...(group.operators.get(operator) || [])].sort((a, b) => a.localeCompare(b));
+        return `<td>${suppliers.length ? suppliers.map((supplier) => `<span class="supplier">${escapeHtml(supplier)}</span>`).join(" ") : ""}</td>`;
+      })
+      .join("");
+    return `<tr><td>${index + 1}</td><td>${escapeHtml(group.senderId)}</td>${supplierCells}</tr>`;
+  });
+  const generatedAt = new Date().toLocaleString("id-ID");
+  const html = `
+    <html>
+      <head>
+        <meta charset="UTF-8" />
+        <style>
+          body { font-family: Arial, sans-serif; }
+          h2 { margin: 0 0 6px; }
+          .meta { margin: 0 0 14px; color: #475569; font-size: 12px; }
+          table { border-collapse: collapse; width: 100%; }
+          th, td { border: 1px solid #94a3b8; padding: 8px 10px; text-align: center; vertical-align: top; }
+          th { background: #1f2937; color: #ffffff; font-weight: 700; }
+          td:nth-child(2) { text-align: left; font-weight: 700; }
+          .supplier { display: inline-block; margin: 1px 2px; padding: 3px 8px; border-radius: 10px; background: #6d28d9; color: #ffffff; font-weight: 700; }
+        </style>
+      </head>
+      <body>
+        <h2>Readiness Supplier</h2>
+        <p class="meta">${groups.length.toLocaleString("en-US")} sender exported - ${generatedAt}</p>
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Sender ID</th>
+              ${senderDbOperators.map((operator) => `<th>${escapeHtml(operator)}</th>`).join("")}
+            </tr>
+          </thead>
+          <tbody>${rows.join("") || `<tr><td colspan="${senderDbOperators.length + 2}">No supplier readiness data found</td></tr>`}</tbody>
+        </table>
+      </body>
+    </html>
+  `;
+  downloadExcelHtml(html, `supplier-readiness-${new Date().toISOString().slice(0, 10)}.xls`);
+}
+
 function renderSupplierReadinessRows(groups) {
   const tbody = document.getElementById("supplierReadyTbody");
   const status = document.getElementById("supplierReadyStatus");
@@ -1264,9 +1329,12 @@ function initSupplierReadiness() {
   senderDbReadyCallbacks.push(() => {
     const groups = buildSenderReadinessGroups();
     fillReadinessCategorySelect("supplierReadyCategory", groups);
-    const render = () => renderSupplierReadinessRows(filterReadinessGroups(groups, "supplierReadySearch", "supplierReadyCategory"));
+    const getFilteredGroups = () => filterReadinessGroups(groups, "supplierReadySearch", "supplierReadyCategory");
+    const render = () => renderSupplierReadinessRows(getFilteredGroups());
     document.getElementById("supplierReadySearch")?.addEventListener("input", render);
     document.getElementById("supplierReadyCategory")?.addEventListener("change", render);
+    const exportButton = document.getElementById("supplierReadyExport");
+    if (exportButton) exportButton.onclick = () => exportSupplierReadinessExcel(getFilteredGroups());
     render();
   });
   loadSenderDatabase();
