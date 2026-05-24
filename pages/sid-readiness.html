@@ -1,0 +1,36 @@
+<div class="sender-db-page readiness-page">
+  <section class="sender-db-head">
+    <div>
+      <span>Database SenderID</span>
+      <h2>SID Readiness</h2>
+    </div>
+  </section>
+
+  <section class="sender-db-filter readiness-filter">
+    <textarea id="sidReadySearch" placeholder="Paste sender ID, bisa banyak: satu baris satu sender atau pisah koma"></textarea>
+    <select id="sidReadyCategory"><option value="">All Category</option></select>
+  </section>
+
+  <section class="sender-db-card">
+    <div class="sender-db-toolbar">
+      <span id="sidReadyStatus">Loading readiness...</span>
+    </div>
+    <div class="sender-db-table-wrap readiness-table-wrap">
+      <table class="readiness-table">
+        <thead>
+          <tr>
+            <th>Sender ID</th>
+            <th>Telkomsel</th>
+            <th>Indosat</th>
+            <th>Three</th>
+            <th>XL</th>
+            <th>Smartfren</th>
+          </tr>
+        </thead>
+        <tbody id="sidReadyTbody">
+          <tr><td colspan="6">Loading data...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>

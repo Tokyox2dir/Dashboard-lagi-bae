@@ -1,0 +1,36 @@
+<div class="sender-db-page readiness-page">
+  <section class="sender-db-head">
+    <div>
+      <span>Database SenderID</span>
+      <h2>Readiness Supplier</h2>
+    </div>
+  </section>
+
+  <section class="sender-db-filter readiness-filter">
+    <textarea id="supplierReadySearch" placeholder="Paste sender ID, bisa banyak: satu baris satu sender atau pisah koma"></textarea>
+    <select id="supplierReadyCategory"><option value="">All Category</option></select>
+  </section>
+
+  <section class="sender-db-card">
+    <div class="sender-db-toolbar">
+      <span id="supplierReadyStatus">Loading supplier readiness...</span>
+    </div>
+    <div class="sender-db-table-wrap readiness-table-wrap">
+      <table class="readiness-table supplier-readiness-table">
+        <thead>
+          <tr>
+            <th>Sender</th>
+            <th>Telkomsel</th>
+            <th>Indosat</th>
+            <th>Three</th>
+            <th>XL</th>
+            <th>Smartfren</th>
+          </tr>
+        </thead>
+        <tbody id="supplierReadyTbody">
+          <tr><td colspan="6">Loading data...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>

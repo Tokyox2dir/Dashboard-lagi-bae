@@ -1,0 +1,60 @@
+<div class="sender-db-page">
+  <section class="sender-db-head">
+    <div>
+      <span>Local Sender Database</span>
+      <h2>Database SenderID</h2>
+    </div>
+    <button type="button" class="sender-db-add">Add Sender ID</button>
+  </section>
+
+  <section class="sender-db-stats">
+    <div><span>Total Rows</span><strong id="senderDbTotal">0</strong></div>
+    <div><span>Unique Sender ID</span><strong id="senderDbSenderTotal">0</strong></div>
+    <div><span>Supplier</span><strong id="senderDbSupplierTotal">0</strong></div>
+    <div><span>Operator</span><strong id="senderDbOperatorTotal">0</strong></div>
+  </section>
+
+  <section class="sender-db-filter">
+    <input type="text" id="senderDbSearch" placeholder="Search sender, supplier, content..." />
+    <select id="senderDbSupplier"><option value="">All Supplier</option></select>
+    <select id="senderDbCategory"><option value="">All Category</option></select>
+    <select id="senderDbOperator"><option value="">All Operator</option></select>
+    <select id="senderDbContent"><option value="">All Content</option></select>
+  </section>
+
+  <section class="sender-db-card">
+    <div class="sender-db-toolbar">
+      <span id="senderDbStatus">Loading sender database...</span>
+      <label>Rows
+        <select id="senderDbRows">
+          <option>25</option>
+          <option>50</option>
+          <option>100</option>
+          <option selected>200</option>
+          <option value="all">All</option>
+        </select>
+      </label>
+    </div>
+    <div class="sender-db-table-wrap">
+      <table class="sender-db-table">
+        <thead>
+          <tr>
+            <th>Sender ID</th>
+            <th>Supplier Name</th>
+            <th>Category</th>
+            <th>Operator</th>
+            <th>Content</th>
+          </tr>
+        </thead>
+        <tbody id="senderDbTbody">
+          <tr><td colspan="5">Loading data...</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="sender-db-pagination">
+      <button type="button" id="senderDbPrev">Prev</button>
+      <span id="senderDbPageInfo">Page 1 / 1</span>
+      <button type="button" id="senderDbNext">Next</button>
+    </div>
+  </section>
+</div>

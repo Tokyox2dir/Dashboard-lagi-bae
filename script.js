@@ -769,6 +769,15 @@ function initLoadedPage(page) {
   if (page === "business-overview") {
     renderBusinessOverview();
   }
+  if (page === "database-senderid") {
+    initSenderDatabase();
+  }
+  if (page === "sid-readiness") {
+    initSidReadiness();
+  }
+  if (page === "readiness-supplier") {
+    initSupplierReadiness();
+  }
 }
 
 window.initLoadedPage = initLoadedPage;
@@ -793,6 +802,285 @@ function showUserList() {
 
 window.openUserDetail = openUserDetail;
 window.showUserList = showUserList;
+
+let senderDbRows = [];
+let senderDbFilteredRows = [];
+let senderDbPage = 1;
+let senderDbBound = false;
+let senderDbReadyCallbacks = [];
+const senderDbOperators = ["Telkomsel", "Indosat", "Three", "XL", "Smartfren"];
+
+function setSenderDbStatus(text) {
+  const status = document.getElementById("senderDbStatus");
+  if (status) status.textContent = text;
+}
+
+function uniqueSenderDbValues(key) {
+  return [...new Set(senderDbRows.map((row) => row[key]).filter(Boolean))].sort((a, b) => a.localeCompare(b));
+}
+
+function fillSenderDbSelect(id, values, label) {
+  const select = document.getElementById(id);
+  if (!select) return;
+  select.innerHTML = `<option value="">${label}</option>${values.map((value) => `<option value="${escapeHtml(value)}">${escapeHtml(value)}</option>`).join("")}`;
+}
+
+function normalizeSenderDbFilter(value) {
+  const trimmedValue = String(value || "").trim();
+  return trimmedValue ? normalizeFilterValue(trimmedValue) : "";
+}
+
+function updateSenderDbStats() {
+  const total = document.getElementById("senderDbTotal");
+  const senderTotal = document.getElementById("senderDbSenderTotal");
+  const supplierTotal = document.getElementById("senderDbSupplierTotal");
+  const operatorTotal = document.getElementById("senderDbOperatorTotal");
+
+  if (total) total.textContent = senderDbRows.length.toLocaleString("en-US");
+  if (senderTotal) senderTotal.textContent = new Set(senderDbRows.map((row) => row.senderId)).size.toLocaleString("en-US");
+  if (supplierTotal) supplierTotal.textContent = new Set(senderDbRows.map((row) => row.supplierName)).size.toLocaleString("en-US");
+  if (operatorTotal) operatorTotal.textContent = new Set(senderDbRows.map((row) => row.operator)).size.toLocaleString("en-US");
+}
+
+function hydrateSenderDbFilters() {
+  fillSenderDbSelect("senderDbSupplier", uniqueSenderDbValues("supplierName"), "All Supplier");
+  fillSenderDbSelect("senderDbCategory", uniqueSenderDbValues("category"), "All Category");
+  fillSenderDbSelect("senderDbOperator", uniqueSenderDbValues("operator"), "All Operator");
+  fillSenderDbSelect("senderDbContent", uniqueSenderDbValues("content"), "All Content");
+}
+
+function applySenderDbFilters() {
+  const query = normalizeSenderDbFilter(document.getElementById("senderDbSearch")?.value || "");
+  const supplier = normalizeSenderDbFilter(document.getElementById("senderDbSupplier")?.value || "");
+  const category = normalizeSenderDbFilter(document.getElementById("senderDbCategory")?.value || "");
+  const operator = normalizeSenderDbFilter(document.getElementById("senderDbOperator")?.value || "");
+  const content = normalizeSenderDbFilter(document.getElementById("senderDbContent")?.value || "");
+
+  senderDbFilteredRows = senderDbRows.filter((row) => {
+    const haystack = normalizeFilterValue(`${row.senderId} ${row.supplierName} ${row.category} ${row.operator} ${row.content}`);
+    return (
+      (!query || haystack.includes(query)) &&
+      (!supplier || normalizeFilterValue(row.supplierName) === supplier) &&
+      (!category || normalizeFilterValue(row.category) === category) &&
+      (!operator || normalizeFilterValue(row.operator) === operator) &&
+      (!content || normalizeFilterValue(row.content) === content)
+    );
+  });
+}
+
+function renderSenderDbRows() {
+  const tbody = document.getElementById("senderDbTbody");
+  const pageInfo = document.getElementById("senderDbPageInfo");
+  const prev = document.getElementById("senderDbPrev");
+  const next = document.getElementById("senderDbNext");
+  const rowsValue = document.getElementById("senderDbRows")?.value || "200";
+  const rowsPerPage = rowsValue === "all" ? senderDbFilteredRows.length || 1 : Number(rowsValue);
+  const totalPages = Math.max(1, Math.ceil(senderDbFilteredRows.length / rowsPerPage));
+
+  senderDbPage = Math.min(Math.max(senderDbPage, 1), totalPages);
+  const start = (senderDbPage - 1) * rowsPerPage;
+  const visibleRows = senderDbFilteredRows.slice(start, start + rowsPerPage);
+
+  if (!tbody) return;
+  tbody.innerHTML = visibleRows.length
+    ? visibleRows
+        .map(
+          (row) => `
+            <tr>
+              <td>${escapeHtml(row.senderId)}</td>
+              <td>${escapeHtml(row.supplierName)}</td>
+              <td><span class="sender-db-badge category">${escapeHtml(row.category)}</span></td>
+              <td><span class="sender-db-badge operator">${escapeHtml(row.operator)}</span></td>
+              <td>${escapeHtml(row.content)}</td>
+            </tr>
+          `,
+        )
+        .join("")
+    : '<tr><td colspan="5">No sender data found</td></tr>';
+
+  if (pageInfo) pageInfo.textContent = rowsValue === "all" ? "All rows" : `Page ${senderDbPage} / ${totalPages}`;
+  if (prev) prev.disabled = rowsValue === "all" || senderDbPage <= 1;
+  if (next) next.disabled = rowsValue === "all" || senderDbPage >= totalPages;
+  setSenderDbStatus(
+    `${senderDbRows.length.toLocaleString("en-US")} local rows loaded • ${senderDbFilteredRows.length.toLocaleString("en-US")} rows match filter • ${visibleRows.length.toLocaleString("en-US")} displayed`,
+  );
+}
+
+function refreshSenderDbTable(resetPage = true) {
+  if (resetPage) senderDbPage = 1;
+  applySenderDbFilters();
+  renderSenderDbRows();
+}
+
+function bindSenderDbControls() {
+  if (senderDbBound) return;
+  senderDbBound = true;
+  ["senderDbSearch", "senderDbSupplier", "senderDbCategory", "senderDbOperator", "senderDbContent", "senderDbRows"].forEach((id) => {
+    document.getElementById(id)?.addEventListener("input", () => refreshSenderDbTable(true));
+    document.getElementById(id)?.addEventListener("change", () => refreshSenderDbTable(true));
+  });
+  document.getElementById("senderDbPrev")?.addEventListener("click", () => {
+    senderDbPage -= 1;
+    renderSenderDbRows();
+  });
+  document.getElementById("senderDbNext")?.addEventListener("click", () => {
+    senderDbPage += 1;
+    renderSenderDbRows();
+  });
+}
+
+function loadSenderDatabase() {
+  if (senderDbRows.length) {
+    senderDbReadyCallbacks.splice(0).forEach((callback) => callback());
+    return;
+  }
+
+  const localRows = Array.isArray(window.SENDER_ID_DATABASE) ? window.SENDER_ID_DATABASE : [];
+  senderDbRows = localRows
+    .map((row) => ({
+      senderId: String(row.senderId || "").trim(),
+      supplierName: String(row.supplierName || "").trim(),
+      category: String(row.category || "").trim(),
+      operator: String(row.operator || "").trim(),
+      content: String(row.content || "").trim(),
+    }))
+    .filter((row) => row.senderId && row.senderId !== "Sender ID");
+
+  if (!senderDbRows.length) {
+    setSenderDbStatus("Local sender database file not found");
+    return;
+  }
+
+  senderDbReadyCallbacks.splice(0).forEach((callback) => callback());
+}
+
+function initSenderDatabase() {
+  senderDbBound = false;
+  bindSenderDbControls();
+  senderDbReadyCallbacks.push(() => {
+    hydrateSenderDbFilters();
+    updateSenderDbStats();
+    refreshSenderDbTable(true);
+  });
+  loadSenderDatabase();
+}
+
+function buildSenderReadinessGroups() {
+  const groups = new Map();
+  senderDbRows.forEach((row) => {
+    if (!groups.has(row.senderId)) {
+      groups.set(row.senderId, {
+        senderId: row.senderId,
+        categories: new Set(),
+        operators: new Map(senderDbOperators.map((operator) => [operator, new Set()])),
+      });
+    }
+    const group = groups.get(row.senderId);
+    if (row.category) group.categories.add(row.category);
+    if (!group.operators.has(row.operator)) group.operators.set(row.operator, new Set());
+    if (row.supplierName) group.operators.get(row.operator).add(row.supplierName);
+  });
+  return [...groups.values()].sort((a, b) => a.senderId.localeCompare(b.senderId));
+}
+
+function fillReadinessCategorySelect(id, groups) {
+  const select = document.getElementById(id);
+  if (!select) return;
+  const categories = [...new Set(groups.flatMap((group) => [...group.categories]))].sort((a, b) => a.localeCompare(b));
+  select.innerHTML = `<option value="">All Category</option>${categories.map((category) => `<option value="${escapeHtml(category)}">${escapeHtml(category)}</option>`).join("")}`;
+}
+
+function filterReadinessGroups(groups, searchId, categoryId) {
+  const rawQuery = document.getElementById(searchId)?.value || "";
+  const queries = rawQuery
+    .split(/[\n,;]+/)
+    .map((value) => normalizeFilterValue(value))
+    .filter(Boolean);
+  const category = document.getElementById(categoryId)?.value || "";
+  return groups.filter((group) => {
+    const supplierText = [...group.operators.values()].flatMap((suppliers) => [...suppliers]).join(" ");
+    const haystack = normalizeFilterValue(`${group.senderId} ${supplierText}`);
+    const senderKey = normalizeFilterValue(group.senderId);
+    const queryMatch = !queries.length || queries.some((query) => senderKey.includes(query) || haystack.includes(query));
+    return queryMatch && (!category || group.categories.has(category));
+  });
+}
+
+function renderSidReadinessRows(groups) {
+  const tbody = document.getElementById("sidReadyTbody");
+  const status = document.getElementById("sidReadyStatus");
+  if (!tbody) return;
+  tbody.innerHTML = groups.length
+    ? groups
+        .map(
+          (group) => `
+            <tr>
+              <td>${escapeHtml(group.senderId)}</td>
+              ${senderDbOperators
+                .map((operator) => {
+                  const ready = group.operators.get(operator)?.size > 0;
+                  return `<td><span class="sid-ready-pill ${ready ? "ready" : "not-ready"}">${ready ? "Ready" : "Not Ready"}</span></td>`;
+                })
+                .join("")}
+            </tr>
+          `,
+        )
+        .join("")
+    : '<tr><td colspan="6">No readiness data found</td></tr>';
+  if (status) status.textContent = `${groups.length.toLocaleString("en-US")} unique Sender ID shown`;
+}
+
+function renderSupplierReadinessRows(groups) {
+  const tbody = document.getElementById("supplierReadyTbody");
+  const status = document.getElementById("supplierReadyStatus");
+  if (!tbody) return;
+  tbody.innerHTML = groups.length
+    ? groups
+        .map(
+          (group) => `
+            <tr>
+              <td>${escapeHtml(group.senderId)}</td>
+              ${senderDbOperators
+                .map((operator) => {
+                  const suppliers = [...(group.operators.get(operator) || [])].sort((a, b) => a.localeCompare(b));
+                  return `<td>${
+                    suppliers.length
+                      ? suppliers.map((supplier) => `<span class="supplier-ready-pill">${escapeHtml(supplier)}</span>`).join("")
+                      : '<span class="supplier-empty-dot"></span>'
+                  }</td>`;
+                })
+                .join("")}
+            </tr>
+          `,
+        )
+        .join("")
+    : '<tr><td colspan="6">No supplier readiness data found</td></tr>';
+  if (status) status.textContent = `${groups.length.toLocaleString("en-US")} unique Sender ID shown`;
+}
+
+function initSidReadiness() {
+  senderDbReadyCallbacks.push(() => {
+    const groups = buildSenderReadinessGroups();
+    fillReadinessCategorySelect("sidReadyCategory", groups);
+    const render = () => renderSidReadinessRows(filterReadinessGroups(groups, "sidReadySearch", "sidReadyCategory"));
+    document.getElementById("sidReadySearch")?.addEventListener("input", render);
+    document.getElementById("sidReadyCategory")?.addEventListener("change", render);
+    render();
+  });
+  loadSenderDatabase();
+}
+
+function initSupplierReadiness() {
+  senderDbReadyCallbacks.push(() => {
+    const groups = buildSenderReadinessGroups();
+    fillReadinessCategorySelect("supplierReadyCategory", groups);
+    const render = () => renderSupplierReadinessRows(filterReadinessGroups(groups, "supplierReadySearch", "supplierReadyCategory"));
+    document.getElementById("supplierReadySearch")?.addEventListener("input", render);
+    document.getElementById("supplierReadyCategory")?.addEventListener("change", render);
+    render();
+  });
+  loadSenderDatabase();
+}
 
 let snapshotChart = null;
 
