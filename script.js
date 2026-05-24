@@ -10,6 +10,25 @@ function toggleDark(el) {
 
 let highlightedTime = null;
 let selectedLogContext = null;
+const demoPassword = "Sapiterbang";
+const demoUsers = [
+  "dito",
+  "Monitoring",
+  "iqbal",
+  "dwi",
+  "gladwyn",
+  "tika",
+  "agiel",
+  "baneztopup",
+  "vio",
+  "root",
+  "jason",
+  "fat",
+  "superadmin",
+  "Fadhil",
+];
+let navPageCatalog = [];
+let currentUserProfile = null;
 
 function escapeHtml(value) {
   return String(value ?? "")
@@ -19,6 +38,205 @@ function escapeHtml(value) {
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#039;");
 }
+
+function getStoredProfiles() {
+  try {
+    return JSON.parse(localStorage.getItem("dashboardUserProfiles") || "{}");
+  } catch (error) {
+    return {};
+  }
+}
+
+function saveStoredProfiles(profiles) {
+  localStorage.setItem("dashboardUserProfiles", JSON.stringify(profiles));
+}
+
+function getAllNavPages() {
+  return [...document.querySelectorAll("[data-page]")]
+    .map((item) => ({
+      page: item.dataset.page,
+      label: item.querySelector(".nav-text")?.textContent.trim() || item.textContent.trim().replace(/\s+/g, " "),
+    }))
+    .filter((item, index, list) => item.page && list.findIndex((entry) => entry.page === item.page) === index);
+}
+
+function defaultRolePages(username, role, allPages) {
+  const key = String(username || "").toLowerCase();
+  if (key === "dito" || key === "superadmin" || role === "Admin") return allPages;
+  if (key === "monitoring" || role === "Noc") {
+    return [
+      "monitoring",
+      "business-overview",
+      "database-senderid",
+      "sid-readiness",
+      "readiness-supplier",
+      "logs",
+      "status-checker",
+      "telegram-alert-rules",
+      "change-password",
+    ].filter((page) => allPages.includes(page));
+  }
+  if (key === "iqbal") {
+    return ["summary", "custom-report", "client-reconciliation", "reconcile-by-client", "change-password"].filter((page) => allPages.includes(page));
+  }
+  if (key === "dwi") {
+    return ["sender", "telco-prefixes", "products", "currencies", "company-name", "client-account", "supplier-name", "supplier-account", "change-password"].filter((page) =>
+      allPages.includes(page),
+    );
+  }
+  if (role === "Operator") {
+    return ["logs", "status-checker", "internal-testing", "database-senderid", "sid-readiness", "readiness-supplier", "change-password"].filter((page) =>
+      allPages.includes(page),
+    );
+  }
+  return ["monitoring", "logs", "change-password"].filter((page) => allPages.includes(page));
+}
+
+function getUserProfile(username) {
+  const profiles = getStoredProfiles();
+  const allPages = navPageCatalog.map((item) => item.page);
+  const saved = profiles[username];
+  if (saved?.allowedPages?.length) return saved;
+  const role = String(username).toLowerCase() === "dito" ? "Admin" : "Noc";
+  return {
+    username,
+    role,
+    allowedPages: defaultRolePages(username, role, allPages),
+  };
+}
+
+function setUserProfile(username, profile) {
+  const profiles = getStoredProfiles();
+  profiles[username] = profile;
+  saveStoredProfiles(profiles);
+}
+
+function getActiveSession() {
+  try {
+    return JSON.parse(localStorage.getItem("dashboardSession") || "null");
+  } catch (error) {
+    return null;
+  }
+}
+
+function setActiveSession(username) {
+  const profile = getUserProfile(username);
+  localStorage.setItem("dashboardSession", JSON.stringify({ username }));
+  currentUserProfile = profile;
+  applyUserSession(profile);
+}
+
+function showLoginScreen(message = "") {
+  document.body.classList.add("login-mode");
+  document.getElementById("loginOverlay")?.remove();
+  const overlay = document.createElement("div");
+  overlay.className = "login-overlay";
+  overlay.id = "loginOverlay";
+  overlay.innerHTML = `
+    <form class="login-card" id="loginForm">
+      <img src="assets/art_new2.png" alt="Aura Redision Technologies" />
+      <div>
+        <span>Dashboard Access</span>
+        <h1>Login</h1>
+      </div>
+      <label>
+        Username
+        <select id="loginUsername">
+          ${demoUsers.map((user) => `<option value="${escapeHtml(user)}"${user === "dito" ? " selected" : ""}>${escapeHtml(user)}</option>`).join("")}
+        </select>
+      </label>
+      <label>
+        Password
+        <input type="password" id="loginPassword" value="${demoPassword}" />
+      </label>
+      <button type="submit">Login</button>
+      <p id="loginMessage">${escapeHtml(message || `Default password: ${demoPassword}`)}</p>
+    </form>
+  `;
+  document.body.appendChild(overlay);
+  document.getElementById("loginForm")?.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const username = document.getElementById("loginUsername")?.value || "";
+    const password = document.getElementById("loginPassword")?.value || "";
+    if (password !== demoPassword) {
+      showLoginScreen("Password salah. Default password: Sapiterbang");
+      return;
+    }
+    setActiveSession(username);
+  });
+}
+
+function hideLoginScreen() {
+  document.body.classList.remove("login-mode");
+  document.getElementById("loginOverlay")?.remove();
+}
+
+function applyRoleVisibility(profile) {
+  const allowed = new Set(profile.allowedPages || []);
+  const activePage = document.querySelector("[data-page].active")?.dataset.page || "monitoring";
+  document.querySelectorAll("[data-page]").forEach((item) => {
+    item.hidden = !allowed.has(item.dataset.page);
+  });
+  document.querySelectorAll(".nav-group").forEach((group) => {
+    const children = [...group.querySelectorAll(".nav-subitem[data-page]")];
+    const parent = group.querySelector(".nav-parent[data-page]");
+    const hasVisibleChild = children.some((child) => !child.hidden);
+    const parentAllowed = parent ? allowed.has(parent.dataset.page) : false;
+    if (parent && hasVisibleChild) parent.hidden = false;
+    group.hidden = !hasVisibleChild && !parentAllowed;
+    const hasActivePage = [...group.querySelectorAll("[data-page]")].some((item) => item.dataset.page === activePage);
+    group.classList.toggle("open", hasActivePage && !group.hidden);
+  });
+}
+
+function getFirstAllowedPage(profile) {
+  return navPageCatalog.find((item) => profile.allowedPages?.includes(item.page)) || navPageCatalog[0];
+}
+
+function applyUserSession(profile) {
+  currentUserProfile = profile;
+  hideLoginScreen();
+  applyRoleVisibility(profile);
+  const avatar = document.getElementById("headerAvatar");
+  const headerName = document.getElementById("headerUserName");
+  if (avatar) avatar.textContent = String(profile.username || "U").charAt(0).toUpperCase();
+  if (headerName) headerName.textContent = `Hi, ${profile.username}`;
+
+  const activePage = document.querySelector("[data-page].active")?.dataset.page || "monitoring";
+  if (!profile.allowedPages?.includes(activePage)) {
+    const first = getFirstAllowedPage(profile);
+    if (first) window.navigateToPage(first.page, first.label);
+  }
+}
+
+function initAuthGate() {
+  navPageCatalog = getAllNavPages();
+  const profiles = getStoredProfiles();
+  const allPages = navPageCatalog.map((item) => item.page);
+  demoUsers.forEach((username) => {
+    if (!profiles[username]) {
+      const role = username.toLowerCase() === "dito" ? "Admin" : "Noc";
+      profiles[username] = { username, role, allowedPages: defaultRolePages(username, role, allPages) };
+    }
+  });
+  profiles.dito = { username: "dito", role: "Admin", allowedPages: allPages };
+  saveStoredProfiles(profiles);
+
+  const session = getActiveSession();
+  if (!session?.username) {
+    showLoginScreen();
+    return;
+  }
+  applyUserSession(getUserProfile(session.username));
+}
+
+function logoutDashboard() {
+  localStorage.removeItem("dashboardSession");
+  currentUserProfile = null;
+  showLoginScreen();
+}
+
+window.logoutDashboard = logoutDashboard;
 
 function initAppNavigation() {
   const navItems = document.querySelectorAll("[data-page]");
@@ -94,6 +312,7 @@ function initAppNavigation() {
 
   navItems.forEach((item) => {
     item.addEventListener("click", async () => {
+      if (item.hidden) return;
       const label =
         item.querySelector(".nav-text")?.textContent.trim() ||
         item.textContent.trim().replace(/\s+/g, " ");
@@ -108,6 +327,9 @@ function initAppNavigation() {
         group.classList.toggle("open", !(isParent && wasOpen));
         keepSidebarGroupVisible(group);
       }
+      if (isParent && hasChildren && currentUserProfile && !currentUserProfile.allowedPages?.includes(item.dataset.page)) {
+        return;
+      }
 
       if (item.dataset.page === "monitoring") {
         monitoringPage?.classList.add("active");
@@ -119,6 +341,8 @@ function initAppNavigation() {
       await loadMenuPage(item.dataset.page, label);
     });
   });
+
+  initAuthGate();
 }
 
 initAppNavigation();
@@ -791,6 +1015,7 @@ function openUserDetail(username) {
 
   if (usernameInput) usernameInput.value = username;
   if (emailInput) emailInput.value = `${String(username).toLowerCase()}@gmail.com`;
+  renderUserPermissionEditor(username);
   list?.classList.add("hidden");
   detail?.classList.add("active");
 }
@@ -802,6 +1027,53 @@ function showUserList() {
 
 window.openUserDetail = openUserDetail;
 window.showUserList = showUserList;
+
+function renderUserPermissionEditor(username) {
+  const profile = getUserProfile(username);
+  const roleSelect = document.getElementById("detailRole");
+  const rulesGrid = document.getElementById("detailRulesGrid");
+  const state = document.getElementById("userSaveState");
+  if (roleSelect) roleSelect.value = profile.role || "Noc";
+  if (state) state.textContent = "";
+  if (!rulesGrid) return;
+  const allowed = new Set(profile.allowedPages || []);
+  rulesGrid.innerHTML = navPageCatalog
+    .map(
+      (item) => `
+        <label>
+          <input type="checkbox" value="${escapeHtml(item.page)}" ${allowed.has(item.page) ? "checked" : ""} ${username === "dito" ? "disabled" : ""} />
+          ${escapeHtml(item.label)}
+        </label>
+      `,
+    )
+    .join("");
+
+  if (roleSelect) {
+    roleSelect.onchange = () => {
+      if (username === "dito") return;
+      const pages = defaultRolePages(username, roleSelect.value, navPageCatalog.map((item) => item.page));
+      rulesGrid.querySelectorAll("input[type='checkbox']").forEach((input) => {
+        input.checked = pages.includes(input.value);
+      });
+    };
+  }
+}
+
+function saveUserDetail() {
+  const username = document.getElementById("detailUsername")?.value || "";
+  const role = document.getElementById("detailRole")?.value || "Noc";
+  const state = document.getElementById("userSaveState");
+  const allPages = navPageCatalog.map((item) => item.page);
+  const selectedPages =
+    username === "dito"
+      ? allPages
+      : [...document.querySelectorAll("#detailRulesGrid input[type='checkbox']:checked")].map((input) => input.value);
+  setUserProfile(username, { username, role: username === "dito" ? "Admin" : role, allowedPages: selectedPages });
+  if (state) state.textContent = `Saved. ${selectedPages.length} menu allowed for ${username}.`;
+  if (currentUserProfile?.username === username) applyUserSession(getUserProfile(username));
+}
+
+window.saveUserDetail = saveUserDetail;
 
 let senderDbRows = [];
 let senderDbFilteredRows = [];

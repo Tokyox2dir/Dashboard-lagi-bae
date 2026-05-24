@@ -36,14 +36,14 @@
         <input type="password" />
 
         <label>Role</label>
-        <select>
+        <select id="detailRole">
           <option>Noc</option>
           <option>Admin</option>
           <option>Operator</option>
         </select>
 
         <span></span>
-        <button type="button" class="user-update-btn">Update</button>
+        <button type="button" class="user-update-btn" onclick="saveUserDetail()">Update</button>
 
         <span></span>
         <label class="otp-check"><input type="checkbox" /> Add login with otp</label>
@@ -52,23 +52,10 @@
 
     <div class="user-rules-panel">
       <div class="rules-title">Allowed Rules</div>
-      <div class="rules-grid">
+      <div class="rules-grid" id="detailRulesGrid">
         <label><input type="checkbox" checked /> Monitoring Overview</label>
-        <label><input type="checkbox" checked /> Logs</label>
-        <label><input type="checkbox" checked /> Status Checker</label>
-        <label><input type="checkbox" /> Rejected Logs</label>
-        <label><input type="checkbox" /> Internal Testing</label>
-        <label><input type="checkbox" checked /> Snapshot</label>
-        <label><input type="checkbox" /> Client Analytics</label>
-        <label><input type="checkbox" checked /> Custom Report</label>
-        <label><input type="checkbox" /> Sender</label>
-        <label><input type="checkbox" /> Telco Prefixes</label>
-        <label><input type="checkbox" /> Products</label>
-        <label><input type="checkbox" /> Currencies</label>
-        <label><input type="checkbox" /> Client Reconciliation</label>
-        <label><input type="checkbox" checked /> Telegram Alert Rules</label>
-        <label><input type="checkbox" /> User Management</label>
       </div>
+      <div class="user-save-state" id="userSaveState"></div>
       <button type="button" class="back-user-list" onclick="showUserList()">Back to user list</button>
     </div>
   </div>
