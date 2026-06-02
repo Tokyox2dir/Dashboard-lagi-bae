@@ -3271,32 +3271,32 @@ html[data-theme="dark"] .quotation-modal {
   gap: 14px;
 }
 
-.check-price-sort {
+.check-price-column-head {
   display: inline-flex;
   align-items: center;
-  padding: 3px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: var(--surface2);
+  gap: 7px;
 }
 
-.check-price-sort button {
-  min-height: 30px;
+.check-price-column-head button {
+  width: 24px;
+  height: 24px;
+  display: inline-grid;
+  place-items: center;
   border: 0;
-  border-radius: 6px;
-  background: transparent;
+  border-radius: 999px;
+  background: rgba(59, 130, 246, 0.1);
   color: var(--text3);
   font-family: inherit;
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 900;
-  padding: 0 11px;
+  line-height: 1;
   cursor: pointer;
 }
 
-.check-price-sort button.active {
-  background: var(--surface);
+.check-price-column-head button.active,
+.check-price-column-head button:hover {
+  background: rgba(59, 130, 246, 0.16);
   color: var(--accent);
-  box-shadow: var(--shadow);
 }
 
 .check-price-table {

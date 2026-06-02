@@ -979,29 +979,41 @@ function renderTransactionLogs() {
 
 function initCheckPricePage() {
   const tableBody = document.querySelector(".check-price-table tbody");
-  const sortButtons = document.querySelectorAll("[data-check-price-sort]");
-  if (!tableBody || !sortButtons.length) return;
+  const sortButton = document.querySelector("[data-check-price-sort]");
+  const sortIcon = document.querySelector("[data-check-price-sort-icon]");
+  const priceType = document.querySelector("[data-check-price-type]");
+  const priceLabel = document.querySelector("[data-check-price-label]");
+  if (!tableBody || !sortButton) return;
 
-  const sortRows = (direction) => {
+  const sortRows = () => {
+    const currentDirection = sortButton.dataset.sortDirection;
+    const nextDirection = currentDirection === "asc" ? "desc" : "asc";
     const rows = [...tableBody.querySelectorAll("tr")];
     rows
       .sort((a, b) => {
         const aPrice = Number(a.dataset.price || 0);
         const bPrice = Number(b.dataset.price || 0);
-        return direction === "desc" ? bPrice - aPrice : aPrice - bPrice;
+        return nextDirection === "desc" ? bPrice - aPrice : aPrice - bPrice;
       })
       .forEach((row) => tableBody.appendChild(row));
 
-    sortButtons.forEach((button) => {
-      button.classList.toggle("active", button.dataset.checkPriceSort === direction);
-    });
+    sortButton.dataset.sortDirection = nextDirection;
+    sortButton.classList.add("active");
+    sortButton.setAttribute(
+      "aria-label",
+      nextDirection === "asc" ? "Sort price from highest" : "Sort price from lowest",
+    );
+    if (sortIcon) sortIcon.textContent = nextDirection === "asc" ? "↑" : "↓";
   };
 
-  sortButtons.forEach((button) => {
-    button.addEventListener("click", () => sortRows(button.dataset.checkPriceSort));
-  });
+  const updatePriceLabel = () => {
+    if (!priceLabel || !priceType) return;
+    priceLabel.textContent = priceType.value === "Supplier" ? "Cost" : "Selling Price";
+  };
 
-  sortRows("asc");
+  sortButton.addEventListener("click", sortRows);
+  priceType?.addEventListener("change", updatePriceLabel);
+  updatePriceLabel();
 }
 
 function initLoadedPage(page) {

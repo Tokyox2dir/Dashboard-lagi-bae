@@ -32,7 +32,7 @@
   <section class="check-price-filter" aria-label="Check price filter">
     <label>
       <span>Type</span>
-      <select aria-label="Client or Supplier">
+      <select aria-label="Client or Supplier" data-check-price-type>
         <option>Client / Supplier</option>
         <option>Client</option>
         <option>Supplier</option>
@@ -73,10 +73,6 @@
       </div>
       <div class="check-price-card-actions">
         <small>Last update · 02 Jun 2026</small>
-        <div class="check-price-sort" aria-label="Sort selling price">
-          <button class="active" type="button" data-check-price-sort="asc">Termurah</button>
-          <button type="button" data-check-price-sort="desc">Termahal</button>
-        </div>
       </div>
     </div>
     <table class="check-price-table">
@@ -85,7 +81,14 @@
           <th>Client / Supplier</th>
           <th>Product</th>
           <th>Telco</th>
-          <th>Selling Price</th>
+          <th>
+            <span class="check-price-column-head">
+              <span data-check-price-label>Selling Price</span>
+              <button type="button" aria-label="Sort price" data-check-price-sort>
+                <span data-check-price-sort-icon>↕</span>
+              </button>
+            </span>
+          </th>
         </tr>
       </thead>
       <tbody>
