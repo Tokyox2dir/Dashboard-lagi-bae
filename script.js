@@ -977,6 +977,33 @@ function renderTransactionLogs() {
     .join("");
 }
 
+function initCheckPricePage() {
+  const tableBody = document.querySelector(".check-price-table tbody");
+  const sortButtons = document.querySelectorAll("[data-check-price-sort]");
+  if (!tableBody || !sortButtons.length) return;
+
+  const sortRows = (direction) => {
+    const rows = [...tableBody.querySelectorAll("tr")];
+    rows
+      .sort((a, b) => {
+        const aPrice = Number(a.dataset.price || 0);
+        const bPrice = Number(b.dataset.price || 0);
+        return direction === "desc" ? bPrice - aPrice : aPrice - bPrice;
+      })
+      .forEach((row) => tableBody.appendChild(row));
+
+    sortButtons.forEach((button) => {
+      button.classList.toggle("active", button.dataset.checkPriceSort === direction);
+    });
+  };
+
+  sortButtons.forEach((button) => {
+    button.addEventListener("click", () => sortRows(button.dataset.checkPriceSort));
+  });
+
+  sortRows("asc");
+}
+
 function initLoadedPage(page) {
   if (page === "logs") {
     renderTransactionLogs();
@@ -1004,6 +1031,9 @@ function initLoadedPage(page) {
   }
   if (page === "quotation") {
     initQuotationPage();
+  }
+  if (page === "check-price") {
+    initCheckPricePage();
   }
 }
 

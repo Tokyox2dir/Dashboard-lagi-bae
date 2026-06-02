@@ -71,7 +71,13 @@
         <span>Current selling price</span>
         <strong>Price List</strong>
       </div>
-      <small>Last update · 02 Jun 2026</small>
+      <div class="check-price-card-actions">
+        <small>Last update · 02 Jun 2026</small>
+        <div class="check-price-sort" aria-label="Sort selling price">
+          <button class="active" type="button" data-check-price-sort="asc">Termurah</button>
+          <button type="button" data-check-price-sort="desc">Termahal</button>
+        </div>
+      </div>
     </div>
     <table class="check-price-table">
       <thead>
@@ -83,31 +89,31 @@
         </tr>
       </thead>
       <tbody>
-        <tr>
+        <tr data-price="450">
           <td><strong>GOT_OTP</strong><span>Client route</span></td>
           <td><span class="check-product-pill direct">Direct</span></td>
           <td>Telkomsel</td>
           <td><span class="check-price-value">450</span></td>
         </tr>
-        <tr>
+        <tr data-price="550">
           <td><strong>SF_A2P</strong><span>Client route</span></td>
           <td><span class="check-product-pill international">International</span></td>
           <td>IOH</td>
           <td><span class="check-price-value">550</span></td>
         </tr>
-        <tr>
+        <tr data-price="500">
           <td><strong>GPI_INT</strong><span>Supplier route</span></td>
           <td><span class="check-product-pill bypass">Bypass</span></td>
           <td>XL</td>
           <td><span class="check-price-value">500</span></td>
         </tr>
-        <tr>
+        <tr data-price="640">
           <td><strong>Sahridaya_Dom</strong><span>Client route</span></td>
           <td><span class="check-product-pill wagen">Wagen</span></td>
           <td>IOH</td>
           <td><span class="check-price-value high">640</span></td>
         </tr>
-        <tr>
+        <tr data-price="120">
           <td><strong>SME_DIRECT_OTP</strong><span>Client route</span></td>
           <td><span class="check-product-pill direct">Direct</span></td>
           <td>Telkomsel</td>
