@@ -1,28 +1,78 @@
 <div class="check-price-page">
-  <section class="check-price-filter">
-    <select aria-label="Client or Supplier">
-      <option>Client / Supplier</option>
-      <option>Client</option>
-      <option>Supplier</option>
-    </select>
-    <select aria-label="Product">
-      <option>Product</option>
-      <option>Direct</option>
-      <option>International</option>
-      <option>Bypass</option>
-      <option>Wagen</option>
-    </select>
-    <input type="text" aria-label="Name client or supplier" placeholder="Name client / supplier" />
-    <select aria-label="Telco">
-      <option>Telco</option>
-      <option>Telkomsel</option>
-      <option>IOH</option>
-      <option>XL</option>
-      <option>Three</option>
-    </select>
+  <section class="check-price-hero">
+    <div>
+      <span>Pricing monitor</span>
+      <h2>Check Price</h2>
+      <p>Compare active selling prices by partner, product route, and telco destination.</p>
+    </div>
+    <div class="check-price-hero-meta">
+      <strong>5</strong>
+      <small>Active price cards</small>
+    </div>
+  </section>
+
+  <section class="check-price-stats" aria-label="Pricing summary">
+    <article>
+      <span>Lowest Price</span>
+      <strong>120</strong>
+      <small>SME_DIRECT_OTP · Telkomsel</small>
+    </article>
+    <article>
+      <span>Highest Price</span>
+      <strong>640</strong>
+      <small>Sahridaya_Dom · IOH</small>
+    </article>
+    <article>
+      <span>Coverage</span>
+      <strong>4</strong>
+      <small>Products across 3 telcos</small>
+    </article>
+  </section>
+
+  <section class="check-price-filter" aria-label="Check price filter">
+    <label>
+      <span>Type</span>
+      <select aria-label="Client or Supplier">
+        <option>Client / Supplier</option>
+        <option>Client</option>
+        <option>Supplier</option>
+      </select>
+    </label>
+    <label>
+      <span>Product</span>
+      <select aria-label="Product">
+        <option>Product</option>
+        <option>Direct</option>
+        <option>International</option>
+        <option>Bypass</option>
+        <option>Wagen</option>
+      </select>
+    </label>
+    <label class="check-price-search">
+      <span>Partner Name</span>
+      <input type="text" aria-label="Name client or supplier" placeholder="Name client / supplier" />
+    </label>
+    <label>
+      <span>Telco</span>
+      <select aria-label="Telco">
+        <option>Telco</option>
+        <option>Telkomsel</option>
+        <option>IOH</option>
+        <option>XL</option>
+        <option>Three</option>
+      </select>
+    </label>
+    <button type="button">Search</button>
   </section>
 
   <section class="check-price-card">
+    <div class="check-price-card-head">
+      <div>
+        <span>Current selling price</span>
+        <strong>Price List</strong>
+      </div>
+      <small>Last update · 02 Jun 2026</small>
+    </div>
     <table class="check-price-table">
       <thead>
         <tr>
@@ -33,11 +83,36 @@
         </tr>
       </thead>
       <tbody>
-        <tr><td>GOT_OTP</td><td>Direct</td><td>Telkomsel</td><td>450</td></tr>
-        <tr><td>SF_A2P</td><td>International</td><td>IOH</td><td>550</td></tr>
-        <tr><td>GPI_INT</td><td>Bypass</td><td>XL</td><td>500</td></tr>
-        <tr><td>Sahridaya_Dom</td><td>Wagen</td><td>IOH</td><td>640</td></tr>
-        <tr><td>SME_DIRECT_OTP</td><td>Direct</td><td>Telkomsel</td><td>120</td></tr>
+        <tr>
+          <td><strong>GOT_OTP</strong><span>Client route</span></td>
+          <td><span class="check-product-pill direct">Direct</span></td>
+          <td>Telkomsel</td>
+          <td><span class="check-price-value">450</span></td>
+        </tr>
+        <tr>
+          <td><strong>SF_A2P</strong><span>Client route</span></td>
+          <td><span class="check-product-pill international">International</span></td>
+          <td>IOH</td>
+          <td><span class="check-price-value">550</span></td>
+        </tr>
+        <tr>
+          <td><strong>GPI_INT</strong><span>Supplier route</span></td>
+          <td><span class="check-product-pill bypass">Bypass</span></td>
+          <td>XL</td>
+          <td><span class="check-price-value">500</span></td>
+        </tr>
+        <tr>
+          <td><strong>Sahridaya_Dom</strong><span>Client route</span></td>
+          <td><span class="check-product-pill wagen">Wagen</span></td>
+          <td>IOH</td>
+          <td><span class="check-price-value high">640</span></td>
+        </tr>
+        <tr>
+          <td><strong>SME_DIRECT_OTP</strong><span>Client route</span></td>
+          <td><span class="check-product-pill direct">Direct</span></td>
+          <td>Telkomsel</td>
+          <td><span class="check-price-value low">120</span></td>
+        </tr>
       </tbody>
     </table>
   </section>
